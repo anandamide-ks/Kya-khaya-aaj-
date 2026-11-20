@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kya Khaya Aaj?</title>
+<meta name="description" content="Kya Khaya Aaj? A calorie tracker with Mr Idli and Ms Chutney. anandamide.ks">
+<meta name="keywords" content="anandamide.ks">
+<meta name="author" content="anandamide.ks">
+<meta name="theme-color" content="#123524">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kya Khaya Aaj?">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one narrow column. The cats and today's number first, then the add box, then the meals, then the week. */
+:root{
+  --bg:#F3F7F4;
+  --surface:#FFFFFF;
+  --ink:#123524;        /* phthalo green */
+  --soft:#587066;
+  --hair:#D5E0DA;
+  --green:#1C5A41;
+  --green-wash:#E3EFE8;
+  --maroon:#7B1E3A;
+  --maroon-fill:#7B1E3A;
+  --on-accent:#FFFFFF;
+  --chip-bg:#F6E6EA;
+  --chip-ink:#7B1E3A;
+  --barfill:#F3F7F4;
+  --bubble:#FFFFFF;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0A1D15;--surface:#112C20;--ink:#E8F2EC;--soft:#9DB5AA;--hair:#234636;
+    --green:#3FA37A;--green-wash:#173A2B;
+    --maroon:#D0899B;--maroon-fill:#8E2A47;--on-accent:#F7E9ED;--chip-bg:#8E2A47;--chip-ink:#F7E9ED;--barfill:#3FA37A;--bubble:#173A2B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0A1D15;--surface:#112C20;--ink:#E8F2EC;--soft:#9DB5AA;--hair:#234636;
+  --green:#3FA37A;--green-wash:#173A2B;
+  --maroon:#D0899B;--maroon-fill:#8E2A47;--on-accent:#F7E9ED;--chip-bg:#8E2A47;--chip-ink:#F7E9ED;--barfill:#3FA37A;--bubble:#173A2B;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:18px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--maroon);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font:700 22px/1 var(--display);margin:0;letter-spacing:-.01em}
+.tag{font-size:12px;font-weight:600;color:var(--maroon);letter-spacing:.02em}
+.datenav{display:flex;align-items:center;gap:6px}
+.datenav button{width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:var(--surface);font-size:16px;line-height:1}
+.datenav button:hover{border-color:var(--green)}
+.datenav .label{min-width:128px;text-align:center;font-weight:600}
+.datenav .today{width:auto;border-radius:17px;padding:0 12px;font-size:13px;font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:18px}
+.card h2{font:700 15px/1.2 var(--display);margin:0 0 12px;letter-spacing:.01em}
+
+/* cats */
+.cats{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:end;padding:14px 18px 0;overflow:hidden}
+.catpair{display:flex;align-items:flex-end;gap:0;grid-row:span 2}
+.catpair svg{display:block}
+.catpair .idli{width:104px;height:104px}
+.catpair .chutney{width:84px;height:84px;margin-left:-14px}
+.talk{display:flex;flex-direction:column;gap:8px;padding-bottom:16px;min-width:0}
+.bubble{margin:0;position:relative;background:var(--green-wash);border-radius:12px;padding:8px 12px;font-size:14px;max-width:420px}
+.bubble b{font-weight:600;color:var(--maroon);margin-right:4px}
+.bubble.c{align-self:flex-start;background:var(--chip-bg);color:var(--chip-ink)}
+.bubble.c b{color:inherit}
+@media (prefers-reduced-motion:no-preference){
+  .catpair .idli .tail{transform-origin:86px 92px;animation:wag 3.2s ease-in-out infinite}
+  .catpair .chutney .tail{transform-origin:86px 92px;animation:wag 2.6s ease-in-out infinite reverse}
+  .catpair .blink{animation:blink 5s infinite}
+  .catpair .chutney .blink{animation-delay:1.7s}
+}
+@keyframes wag{0%,100%{transform:rotate(0)}50%{transform:rotate(-12deg)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+.blink{transform-box:fill-box;transform-origin:center}
+
+/* summary */
+.summary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:root[data-theme="dark"] .summary{background:var(--green-wash);color:var(--ink);border-color:var(--hair)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .summary{background:var(--green-wash);color:var(--ink);border-color:var(--hair)}}
+.sumtop{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.big{font:700 56px/0.95 var(--display);letter-spacing:-.03em}
+.big small{font:500 15px/1 var(--body);letter-spacing:0;opacity:.75;margin-left:6px}
+.state{font-weight:600;padding:5px 11px;border-radius:999px;background:var(--chip-bg);color:var(--chip-ink);font-size:13px;white-space:nowrap}
+.bar{height:10px;border-radius:5px;background:rgba(255,255,255,.16);margin:16px 0 14px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--barfill);width:0;transition:width .3s}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.sumbot{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center}
+.macros{display:flex;gap:18px;flex-wrap:wrap}
+.macros div{font-size:13px;opacity:.8}
+.macros b{display:block;font:700 18px/1.2 var(--display);opacity:1}
+.target{display:flex;align-items:center;gap:8px;font-size:13px}
+.summary .target input{width:84px;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:inherit;text-align:right}
+:root[data-theme="dark"] .summary .target input{border-color:var(--hair)}
+
+/* food pictures */
+.pic{flex:none;width:40px;height:40px;border-radius:12px;background:var(--green-wash);display:grid;place-items:center;font-size:23px;line-height:1;overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:cover}
+.pic.sm{width:34px;height:34px;font-size:19px;border-radius:10px}
+
+/* add */
+.addrow{display:flex;gap:8px;flex-wrap:wrap}
+.addrow input[type=search]{flex:1 1 100%}
+.addrow select{flex:1 1 150px}
+input[type=search],input[type=text],input[type=number],select{padding:9px 11px;border-radius:9px;border:1px solid var(--hair);background:var(--bg);min-width:0}
+.qty{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--soft)}
+.qty input{width:64px}
+.count{font-size:12px;color:var(--soft);margin:10px 0 0}
+.results{list-style:none;margin:6px 0 0;padding:0;max-height:340px;overflow-y:auto;border:1px solid var(--hair);border-radius:10px}
+.results li+li{border-top:1px solid var(--hair)}
+.results button{display:flex;width:100%;align-items:center;gap:12px;padding:8px 12px;background:none;border:0;text-align:left}
+.results button:hover{background:var(--green-wash)}
+.results .txt{flex:1;min-width:0}
+.results .n{font-weight:500;display:block}
+.results .s{color:var(--soft);font-size:13px}
+.results .k{font-weight:600;white-space:nowrap}
+.results .plus{color:var(--maroon);font-weight:700;margin-left:8px}
+.none{padding:12px;color:var(--soft);margin:0}
+details{margin-top:12px}
+summary{cursor:pointer;font-weight:600;color:var(--green)}
+.custom{display:grid;grid-template-columns:2fr repeat(4,1fr);gap:8px;margin-top:10px}
+.custom label{font-size:12px;color:var(--soft);display:flex;flex-direction:column;gap:3px}
+.custom input{width:100%}
+.photo{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--soft)}
+.photo label.pick{padding:7px 12px;border:1px dashed var(--hair);border-radius:9px;cursor:pointer;color:var(--ink)}
+.photo input{position:absolute;opacity:0;width:1px;height:1px}
+.customfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.keep{font-size:13px;color:var(--soft);display:flex;gap:6px;align-items:center}
+.btn{padding:9px 16px;border-radius:9px;border:0;background:var(--maroon-fill);color:var(--on-accent);font-weight:600}
+.btn.ghost{background:none;border:1px solid var(--hair);color:var(--ink)}
+.err{color:var(--maroon);font-size:13px;margin:8px 0 0;min-height:1em}
+.note{font-size:12px;color:var(--soft);margin:10px 0 0}
+
+/* meals */
+.meal+.meal{margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)}
+.mealhead{display:flex;justify-content:space-between;align-items:baseline}
+.mealhead h3{font:700 15px/1.2 var(--display);margin:0}
+.mealhead span{font-weight:600;color:var(--soft);font-size:13px}
+.entries{list-style:none;margin:8px 0 0;padding:0}
+.entries li{display:flex;align-items:center;gap:10px;padding:5px 0}
+.entries .n{flex:1;min-width:0;overflow-wrap:anywhere}
+.entries .n small{color:var(--soft)}
+.entries .k{font-weight:600;white-space:nowrap}
+.entries button{width:28px;height:28px;border-radius:50%;border:1px solid var(--hair);background:none;color:var(--soft);line-height:1;flex:none}
+.entries button:hover{border-color:var(--maroon);color:var(--maroon)}
+.empty{color:var(--soft);font-size:13px;margin:6px 0 0}
+
+/* week */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px;position:relative;margin-top:6px}
+.week .col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;background:none;border:0;padding:0}
+.week .v{font-size:11px;color:var(--soft)}
+.week .b{width:100%;max-width:44px;border-radius:6px 6px 2px 2px;background:var(--green);min-height:2px}
+.week .col.sel .b{background:var(--maroon-fill)}
+.week .col.zero .b{background:var(--hair)}
+.week .d{font-size:12px;font-weight:600}
+.week .col.sel .d{color:var(--maroon)}
+.tline{position:absolute;left:0;right:0;border-top:1.5px dashed var(--soft);pointer-events:none}
+.tline span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--soft);background:var(--surface);padding:0 4px}
+.avg{font-size:13px;color:var(--soft);margin:12px 0 0}
+
+/* data & install */
+.rowbtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.msg{font-size:13px;color:var(--soft);margin:10px 0 0;min-height:1em}
+.install{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--chip-bg);color:var(--chip-ink);border-radius:12px;padding:10px 14px;font-size:14px}
+.install .btn{padding:7px 14px}
+
+footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--soft)}
+footer b{color:var(--maroon);font-weight:600}
+@media (max-width:480px){
+  .big{font-size:44px}
+  .custom{grid-template-columns:1fr 1fr}
+  .custom label:first-child{grid-column:1/-1}
+  .datenav .label{min-width:104px}
+  .cats{grid-template-columns:1fr}
+  .catpair{grid-row:auto;justify-content:center}
+  .talk{padding-bottom:16px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- An original ginger cat, drawn for this app. Shared by both mascots. -->
+    <g id="catBase">
+      <path class="tail" d="M86 96 C108 94 112 72 100 62 C96 59 92 62 95 66 C102 74 98 88 84 88 Z" fill="#E08A3C" stroke="#9A4E17" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M100 63 l4 -2 M104 72 l5 0 M102 82 l4 2" stroke="#B5621F" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="60" cy="90" rx="31" ry="25" fill="#E8913F" stroke="#9A4E17" stroke-width="2"/>
+      <ellipse cx="60" cy="96" rx="17" ry="16" fill="#FBEBDD"/>
+      <path d="M33 84 q6 -3 9 2 M33 94 q6 -3 9 2 M87 84 q-6 -3 -9 2 M87 94 q-6 -3 -9 2" stroke="#B5621F" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="47" cy="112" rx="10" ry="6" fill="#FBEBDD" stroke="#9A4E17" stroke-width="2"/>
+      <ellipse cx="73" cy="112" rx="10" ry="6" fill="#FBEBDD" stroke="#9A4E17" stroke-width="2"/>
+      <path d="M30 34 L35 6 L56 24 Z" fill="#E8913F" stroke="#9A4E17" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M90 34 L85 6 L64 24 Z" fill="#E8913F" stroke="#9A4E17" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M35 28 L37 13 L49 24 Z" fill="#F2B8B0"/>
+      <path d="M85 28 L83 13 L71 24 Z" fill="#F2B8B0"/>
+      <ellipse cx="60" cy="47" rx="33" ry="28" fill="#E8913F" stroke="#9A4E17" stroke-width="2"/>
+      <path d="M52 22 q1 7 -1 11 M60 20 v12 M68 22 q-1 7 1 11" stroke="#B5621F" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M28 46 h8 M29 54 h7 M92 46 h-8 M91 54 h-7" stroke="#B5621F" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="60" cy="61" rx="15" ry="11" fill="#FBEBDD"/>
+      <g class="blink"><ellipse cx="47" cy="48" rx="5.5" ry="6.5" fill="#2E6B47"/><ellipse cx="47" cy="49" rx="2.2" ry="4.5" fill="#10261A"/><circle cx="48.6" cy="46" r="1.4" fill="#fff"/></g>
+      <g class="blink"><ellipse cx="73" cy="48" rx="5.5" ry="6.5" fill="#2E6B47"/><ellipse cx="73" cy="49" rx="2.2" ry="4.5" fill="#10261A"/><circle cx="74.6" cy="46" r="1.4" fill="#fff"/></g>
+      <path d="M56 57 h8 l-4 4.5 Z" fill="#D9737B"/>
+      <path d="M60 61.5 v2.5 q-3 4 -7 1.5 M60 64 q3 4 7 1.5" stroke="#7A3A1A" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M43 60 l-16 -3 M43 64 l-16 2 M77 60 l16 -3 M77 64 l16 2" stroke="#7A3A1A" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>Kya Khaya Aaj?</h1><span class="tag">anandamide.ks</span></div>
+    <div class="datenav">
+      <button id="prev" type="button" aria-label="Previous day">&#8249;</button>
+      <span class="label" id="dateLabel"></span>
+      <button id="next" type="button" aria-label="Next day">&#8250;</button>
+      <button id="goToday" type="button" class="today">Today</button>
+    </div>
+  </header>
+
+  <div class="install" id="installBar" hidden>
+    <span id="installText">Put Kya Khaya Aaj? on your home screen.</span>
+    <button class="btn" type="button" id="installBtn">Install</button>
+  </div>
+
+  <section class="card cats" aria-label="Mr Idli and Ms Chutney">
+    <div class="catpair" aria-hidden="true">
+      <svg class="idli" viewBox="0 0 120 124">
+        <use href="#catBase"/>
+        <!-- Mr Idli's maroon bow tie -->
+        <path d="M60 72 L46 65 L46 80 Z M60 72 L74 65 L74 80 Z" fill="#7B1E3A" stroke="#4E1024" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="60" cy="72" r="3.6" fill="#4E1024"/>
+      </svg>
+      <svg class="chutney" viewBox="0 0 120 124">
+        <use href="#catBase"/>
+        <!-- Ms Chutney's flower, lashes and blush -->
+        <g transform="translate(84 18)">
+          <circle cx="0" cy="-6" r="5" fill="#7B1E3A"/><circle cx="6" cy="-1" r="5" fill="#7B1E3A"/><circle cx="3.5" cy="6" r="5" fill="#7B1E3A"/><circle cx="-3.5" cy="6" r="5" fill="#7B1E3A"/><circle cx="-6" cy="-1" r="5" fill="#7B1E3A"/>
+          <circle cx="0" cy="1" r="3.5" fill="#F4C95D"/>
+        </g>
+        <path d="M41 42 l-3 -3 M44 40.5 l-1.5 -4 M79 42 l3 -3 M76 40.5 l1.5 -4" stroke="#10261A" stroke-width="1.6" stroke-linecap="round"/>
+        <ellipse cx="40" cy="58" rx="5" ry="3" fill="#E88A8F" opacity=".55"/>
+        <ellipse cx="80" cy="58" rx="5" ry="3" fill="#E88A8F" opacity=".55"/>
+      </svg>
+    </div>
+    <div class="talk" aria-live="polite">
+      <p class="bubble" id="sayIdli"></p>
+      <p class="bubble c" id="sayChutney"></p>
+    </div>
+  </section>
+
+  <section class="card summary" aria-label="Day summary">
+    <div class="sumtop">
+      <div class="big num"><span id="eaten">0</span><small>kcal eaten</small></div>
+      <span class="state num" id="stateChip"></span>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="sumbot">
+      <div class="macros num">
+        <div><b id="mP">0 g</b>protein</div>
+        <div><b id="mC">0 g</b>carbs</div>
+        <div><b id="mF">0 g</b>fat</div>
+      </div>
+      <label class="target" for="target">Daily target
+        <input id="target" class="num" type="number" min="500" max="6000" step="50" inputmode="numeric"> kcal
+      </label>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Add food">
+    <h2>Add food</h2>
+    <div class="addrow">
+      <input id="search" type="search" placeholder="Search any food: masor tenga, ramen, falafel, paella…" aria-label="Search foods" autocomplete="off">
+      <select id="cat" aria-label="Cuisine or type"></select>
+      <select id="meal" aria-label="Meal">
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+        <option value="snacks">Snacks and drinks</option>
+      </select>
+      <label class="qty" for="qty">Servings <input id="qty" class="num" type="number" min="0.25" step="0.25" value="1" inputmode="decimal"></label>
+    </div>
+    <p class="count num" id="count"></p>
+    <ul class="results" id="results"></ul>
+    <details id="customBox">
+      <summary>Add something that is not on the list</summary>
+      <form id="customForm" novalidate>
+        <div class="custom">
+          <label>Name <input id="cName" type="text" maxlength="60" autocomplete="off"></label>
+          <label>kcal <input id="cKcal" class="num" type="number" min="0" step="1" inputmode="numeric"></label>
+          <label>Protein g <input id="cP" class="num" type="number" min="0" step="0.5" inputmode="decimal"></label>
+          <label>Carbs g <input id="cC" class="num" type="number" min="0" step="0.5" inputmode="decimal"></label>
+          <label>Fat g <input id="cF" class="num" type="number" min="0" step="0.5" inputmode="decimal"></label>
+        </div>
+        <div class="photo">
+          <span class="pic" id="cPicPreview" aria-hidden="true">🍽️</span>
+          <label class="pick" for="cPhoto">Add a photo</label>
+          <input id="cPhoto" type="file" accept="image/*">
+          <span id="cPhotoNote">Optional. It shows next to this food from now on.</span>
+        </div>
+        <div class="customfoot">
+          <label class="keep" for="cKeep"><input id="cKeep" type="checkbox" checked> Keep it in my food list</label>
+          <button class="btn" type="submit">Add to log</button>
+        </div>
+        <p class="err" id="cErr" role="alert"></p>
+      </form>
+    </details>
+    <p class="note">Values are estimates for a typical serving (1 katori is about 150 ml). Restaurant portions usually run higher.</p>
+  </section>
+
+  <section class="card" aria-label="Meals" id="meals"></section>
+
+  <section class="card" aria-label="Last seven days">
+    <h2>Last 7 days</h2>
+    <div class="week num" id="week"></div>
+    <p class="avg num" id="avg"></p>
+  </section>
+
+  <section class="card" aria-label="Your data">
+    <h2>Your data</h2>
+    <p class="note" style="margin:0 0 12px">Everything stays on this phone or computer. Save a backup now and then, and use it to move your log to another device.</p>
+    <div class="rowbtns">
+      <button class="btn ghost" type="button" id="exportBtn">Save a backup</button>
+      <label class="btn ghost" for="importFile" style="cursor:pointer">Restore a backup</label>
+      <input id="importFile" type="file" accept="application/json,.json" style="position:absolute;opacity:0;width:1px;height:1px">
+    </div>
+    <p class="msg" id="dataMsg" role="status"></p>
+  </section>
+
+  <footer><span id="saveState">Saved on this device</span><span>Made by <b>anandamide.ks</b></span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var GROUPS={
+"North Indian":[
+["Roti / chapati","1 medium",105,3,20,2],
+["Phulka","1",70,2.5,14,0.5],
+["Tandoori roti","1",120,4,24,1],
+["Naan","1",260,8,45,5],
+["Butter naan","1",310,8,45,11],
+["Garlic naan","1",290,8,46,8],
+["Missi roti","1",140,5,22,4],
+["Makki di roti","1",160,3,28,4],
+["Bajra roti","1",120,3.5,22,2],
+["Jowar roti","1",110,3,23,1],
+["Plain paratha","1",200,4,28,8],
+["Aloo paratha","1",290,6,40,12],
+["Gobi paratha","1",250,6,35,10],
+["Paneer paratha","1",320,12,35,15],
+["Methi thepla","1",120,3,16,5],
+["Bhatura","1",300,6,38,14],
+["Chole bhature","1 plate",650,18,80,30],
+["Steamed rice","1 cup cooked",205,4,45,0.5],
+["Jeera rice","1 cup",250,4,45,6],
+["Veg pulao","1 plate",300,6,50,8],
+["Khichdi","1 bowl",220,8,36,5],
+["Chicken biryani","1 plate",450,22,55,15],
+["Mutton biryani","1 plate",500,24,55,20],
+["Veg biryani","1 plate",380,8,60,12],
+["Egg biryani","1 plate",420,15,58,14],
+["Dal tadka","1 katori",150,8,18,5],
+["Dal fry","1 katori",170,8,18,7],
+["Masoor dal","1 katori",130,8,18,3],
+["Moong dal","1 katori",120,8,18,2],
+["Chana dal","1 katori",170,9,24,4],
+["Dal makhani","1 katori",260,10,24,13],
+["Rajma","1 katori",180,9,25,5],
+["Chole","1 katori",210,9,27,8],
+["Kadhi pakora","1 katori",190,6,14,12],
+["Mixed veg sabzi","1 katori",120,3,12,7],
+["Aloo gobi","1 katori",150,3,18,8],
+["Aloo matar","1 katori",160,4,20,7],
+["Aloo sabzi","1 katori",160,3,22,7],
+["Jeera aloo","1 katori",180,3,24,8],
+["Bhindi masala","1 katori",130,3,11,8],
+["Baingan bharta","1 katori",140,3,12,9],
+["Lauki sabzi","1 katori",80,2,9,4],
+["Tinda / turai sabzi","1 katori",80,2,9,4],
+["Methi malai matar","1 katori",250,7,15,18],
+["Sarson ka saag","1 katori",180,5,10,13],
+["Malai kofta","2 kofta + gravy",380,9,22,28],
+["Navratan korma","1 katori",280,7,20,19],
+["Shahi paneer","1 katori",320,13,12,25],
+["Palak paneer","1 katori",240,12,9,18],
+["Paneer butter masala","1 katori",300,12,10,24],
+["Kadai paneer","1 katori",280,13,10,21],
+["Matar paneer","1 katori",250,12,14,16],
+["Paneer bhurji","1 katori",270,16,6,20],
+["Paneer tikka","6 pieces",280,18,8,19],
+["Mushroom masala","1 katori",150,4,10,11],
+["Soya chunk curry","1 katori",190,16,14,8],
+["Egg curry","2 eggs",250,14,7,18],
+["Egg bhurji","2 eggs",210,13,3,16],
+["Chicken curry","1 katori",240,22,6,14],
+["Butter chicken","1 katori",330,24,8,22],
+["Chicken tikka masala","1 katori",310,25,9,19],
+["Kadai chicken","1 katori",280,24,7,17],
+["Chicken korma","1 katori",340,24,9,23],
+["Chicken tikka","6 pieces",220,30,4,9],
+["Tandoori chicken","1 leg piece",260,30,3,14],
+["Chicken seekh kebab","2",220,18,4,15],
+["Mutton curry","1 katori",330,24,6,23],
+["Mutton rogan josh","1 katori",340,24,7,24],
+["Keema matar","1 katori",300,20,10,20],
+["Galouti kebab","2",260,15,6,20],
+["Nihari","1 bowl",420,30,10,29],
+["Curd","1 katori",60,3.5,4.5,3],
+["Raita","1 katori",80,3.5,6,4],
+["Boondi raita","1 katori",130,4,12,7],
+["Green salad (kachumber)","1 bowl",30,1,6,0.2],
+["Papad, roasted","1",35,2,6,0.3],
+["Papad, fried","1",70,2,6,4.5],
+["Mango pickle","1 tbsp",45,0.3,2,4],
+["Mint chutney","2 tbsp",15,0.5,2,0.5]
+],
+"South Indian":[
+["Idli","1",60,2,12,0.3],
+["Rava idli","1",100,3,15,3],
+["Plain dosa","1",135,3,22,4],
+["Masala dosa","1",330,6,48,12],
+["Rava dosa","1",200,4,28,8],
+["Ghee roast dosa","1",260,4,30,14],
+["Mysore masala dosa","1",380,7,52,16],
+["Set dosa","2",220,5,38,5],
+["Neer dosa","2",140,2,30,1],
+["Pesarattu","1",180,8,24,6],
+["Appam","1",120,2,22,2.5],
+["Uttapam","1",200,5,32,6],
+["Medu vada","1",100,3,10,5.5],
+["Dal vada","2",180,6,16,10],
+["Pongal","1 bowl",280,8,38,11],
+["Upma","1 katori",200,5,30,7],
+["Sambar","1 katori",110,5,16,3],
+["Rasam","1 katori",60,2,9,2],
+["Coconut chutney","2 tbsp",70,1,3,6],
+["Tomato chutney","2 tbsp",40,0.5,4,2.5],
+["Curd rice","1 bowl",250,7,40,7],
+["Lemon rice","1 plate",300,5,50,9],
+["Tamarind rice (puliyogare)","1 plate",330,5,52,11],
+["Bisi bele bath","1 bowl",320,9,50,9],
+["Vegetable avial","1 katori",160,3,10,12],
+["Thoran","1 katori",110,3,9,7],
+["Kerala parotta","1",280,5,38,12],
+["Idiyappam","2",150,2,34,0.5],
+["Puttu with kadala curry","1 serving",380,12,62,9],
+["Kerala chicken stew","1 katori",250,20,8,15],
+["Chettinad chicken","1 katori",290,24,6,19],
+["Chicken 65","6 pieces",300,22,10,19],
+["Hyderabadi chicken biryani","1 plate",480,24,58,16],
+["Hyderabadi haleem","1 bowl",400,26,30,20],
+["Andhra pappu","1 katori",150,8,18,5],
+["Gongura pickle","1 tbsp",40,0.5,2,3.5],
+["Payasam","1 katori",230,5,36,8],
+["Mysore pak","1 piece",180,1.5,16,12]
+],
+"Bengali & East Indian":[
+["Luchi","2",240,4,28,12],
+["Kochuri","2",300,6,32,16],
+["Aloo dum","1 katori",190,3,24,9],
+["Cholar dal","1 katori",200,9,26,7],
+["Shukto","1 katori",130,3,12,8],
+["Begun bhaja","2 slices",120,1,7,10],
+["Aloo posto","1 katori",210,4,20,13],
+["Labra","1 katori",120,3,14,6],
+["Chhanar dalna","1 katori",240,12,12,16],
+["Mochar ghonto","1 katori",150,4,16,8],
+["Dhokar dalna","1 katori",260,10,22,15],
+["Kosha mangsho","1 katori",360,25,6,26],
+["Chicken kosha","1 katori",300,24,6,20],
+["Kolkata chicken biryani with aloo","1 plate",520,22,64,18],
+["Egg devil","1",180,8,12,11],
+["Kathi roll, egg","1",380,13,40,18],
+["Kathi roll, chicken","1",420,20,40,19],
+["Jhalmuri","1 cone",150,4,24,4.5],
+["Ghugni","1 katori",180,9,26,5],
+["Puchka","6",180,3,30,5],
+["Telebhaja (beguni)","2",200,3,18,13],
+["Odia dalma","1 katori",170,8,24,5],
+["Pakhala bhata","1 bowl",180,4,40,0.5],
+["Litti chokha","2 litti + chokha",420,12,58,16],
+["Sattu sharbat","1 glass",160,8,26,2.5],
+["Rasgulla","1",125,2,26,1.5],
+["Sandesh","1",110,3,15,4],
+["Mishti doi","1 small cup",160,4,26,4.5],
+["Rasmalai","1 piece",180,5,22,8],
+["Chomchom","1",170,3,30,4.5],
+["Pantua / ledikeni","1",170,2,26,7],
+["Chhena poda","1 slice",200,7,26,8]
+],
+"Assamese & Northeast":[
+["Aloo pitika","1 serving",130,2,20,5],
+["Bilahi tenga (tomato sour curry)","1 katori",70,1.5,9,3.5],
+["Masor tenga","1 piece + gravy",200,20,6,11],
+["Masor jhol (fish curry)","1 piece + gravy",220,20,6,13],
+["Khar (raw papaya)","1 katori",90,2,12,4],
+["Ou tenga dal","1 katori",130,7,18,3],
+["Lai xaak bhaji","1 katori",70,2.5,6,4],
+["Bengena pitika","1 serving",90,1.5,8,6],
+["Duck curry with ash gourd","1 katori",350,20,8,27],
+["Pork with bamboo shoot","1 katori",380,20,6,31],
+["Pork with axone","1 katori",400,22,6,32],
+["Chicken with bamboo shoot","1 katori",230,22,6,13],
+["Masor petu (fish roe) fry","1 serving",180,15,4,12],
+["Komal saul (soft rice) with curd & gur","1 bowl",320,7,62,5],
+["Chira doi gur","1 bowl",330,8,60,6],
+["Til pitha","2",220,4,34,8],
+["Ghila pitha","2",260,3,34,13],
+["Narikol laru","2",180,1.5,22,10],
+["Joha rice","1 cup cooked",200,4,44,0.5],
+["Veg momos, steamed","6",210,6,36,4],
+["Chicken momos, steamed","6",270,14,33,9],
+["Pork momos, steamed","6",320,14,32,15],
+["Fried momos","6",350,10,38,17],
+["Momo chutney","2 tbsp",30,0.5,4,1.5],
+["Veg thukpa","1 bowl",250,8,40,6],
+["Chicken thukpa","1 bowl",320,20,40,9],
+["Chicken laphing","1 plate",300,10,48,8],
+["Eromba","1 katori",110,4,12,5],
+["Singju","1 bowl",90,3,12,3.5],
+["Jadoh (rice with pork)","1 plate",500,20,60,19],
+["Sel roti","1",180,2.5,26,7]
+],
+"West Indian":[
+["Dhokla","3 pieces",160,6,25,4],
+["Khandvi","6 pieces",150,6,16,7],
+["Thepla","1",120,3,16,5],
+["Undhiyu","1 katori",230,5,22,14],
+["Gujarati dal","1 katori",130,6,18,4],
+["Gujarati kadhi","1 katori",110,4,10,6],
+["Handvo","1 slice",200,7,26,8],
+["Khakhra","1",70,2,10,2.5],
+["Fafda","50 g",250,6,25,14],
+["Poha","1 plate",250,5,40,8],
+["Sabudana khichdi","1 bowl",350,4,55,13],
+["Sabudana vada","2",280,3,36,14],
+["Misal pav","1 plate",480,16,58,21],
+["Pav bhaji","2 pav",400,10,55,15],
+["Vada pav","1",290,6,40,12],
+["Dabeli","1",300,6,44,11],
+["Puran poli","1",280,6,48,7],
+["Zunka bhakri","1 serving",320,10,44,11],
+["Thalipeeth","1",220,6,28,9],
+["Goan fish curry","1 piece + gravy",260,20,6,17],
+["Goan prawn curry","1 katori",280,20,8,19],
+["Chicken xacuti","1 katori",320,24,8,21],
+["Pork vindaloo","1 katori",400,24,6,31],
+["Sorpotel","1 katori",380,22,5,30],
+["Goan poi bread","1",180,6,34,2],
+["Bebinca","1 slice",250,3,30,13],
+["Shrikhand","1 katori",250,6,36,9],
+["Aamras","1 katori",150,1,36,0.5]
+],
+"Indian street food & snacks":[
+["Samosa","1",260,4,30,14],
+["Kachori","1",200,4,22,11],
+["Pakora / bhajiya, mixed veg","4",200,4,18,13],
+["Onion bhaji","3",190,3,18,12],
+["Paneer pakora","3",260,11,14,18],
+["Bread pakora","1",250,6,28,13],
+["Aloo tikki","2",220,4,30,10],
+["Aloo tikki chaat","1 plate",320,7,44,13],
+["Papdi chaat","1 plate",300,7,40,13],
+["Dahi puri","6",240,6,34,9],
+["Pani puri / golgappa","6",180,3,30,5],
+["Bhel puri","1 plate",200,5,35,5],
+["Sev puri","6",250,5,32,12],
+["Ragda pattice","1 plate",330,9,48,11],
+["Dahi vada","2",280,9,30,13],
+["Chana chaat","1 bowl",180,9,28,4],
+["Sprouts chaat","1 bowl",130,8,20,2],
+["Corn chaat","1 cup",150,4,26,4.5],
+["Masala corn","1 cup",160,4,26,5.5],
+["Sev","30 g",160,4,15,9],
+["Aloo bhujia","30 g",165,4,14,10.5],
+["Chakli","2",140,2,16,7.5],
+["Mathri","2",160,2.5,16,9.5],
+["Banana chips","30 g",155,0.7,18,10],
+["Roasted chana","30 g",110,6,17,2],
+["Makhana, roasted","1 cup",110,3,20,1],
+["Murmura (puffed rice)","1 cup",55,1,12,0.1],
+["Chicken shawarma (Indian style)","1",450,25,42,20],
+["Egg roll","1",350,11,38,17],
+["Veg frankie","1",320,8,44,12],
+["Chicken frankie","1",400,20,42,16],
+["Chilli paneer roll","1",420,15,42,21],
+["Maggi masala noodles","1 pack",310,7,44,12],
+["Bun maska","1",260,5,34,11],
+["Bread omelette","1",320,15,30,15]
+],
+"Indian sweets":[
+["Gulab jamun","1",150,2,25,5],
+["Jalebi","2",300,2,55,9],
+["Imarti","1",220,2,38,7],
+["Kaju katli","2 pieces",120,2,14,6],
+["Besan ladoo","1",180,4,20,10],
+["Motichoor ladoo","1",170,2,24,8],
+["Coconut ladoo","1",150,1.5,18,8],
+["Barfi, milk","1 piece",150,3,20,7],
+["Peda","1",110,2.5,16,4],
+["Kalakand","1 piece",160,5,18,8],
+["Soan papdi","1 piece",130,1.5,16,7],
+["Gajar ka halwa","1 katori",280,5,36,13],
+["Suji halwa","1 katori",300,4,42,13],
+["Moong dal halwa","1 katori",400,7,44,22],
+["Kheer","1 katori",220,6,34,7],
+["Phirni","1 katori",200,5,32,6],
+["Seviyan kheer","1 katori",230,6,35,7],
+["Kulfi","1 stick",180,4,20,9],
+["Falooda","1 glass",380,8,62,11],
+["Rabri","1 katori",300,8,30,16],
+["Malpua","1",200,3,28,9],
+["Modak, steamed","2",180,2.5,30,6],
+["Gujiya","1",220,3,26,12],
+["Chikki","1 piece",130,4,15,7]
+],
+"Chinese & Indo-Chinese":[
+["Veg fried rice","1 plate",350,7,58,10],
+["Egg fried rice","1 plate",400,12,58,13],
+["Chicken fried rice","1 plate",430,18,58,13],
+["Schezwan fried rice","1 plate",420,8,62,15],
+["Veg hakka noodles","1 plate",380,9,58,12],
+["Chicken hakka noodles","1 plate",450,22,55,15],
+["Veg chow mein","1 plate",380,9,58,12],
+["American chop suey","1 plate",520,12,72,20],
+["Veg manchurian, gravy","1 katori",250,5,24,15],
+["Gobi manchurian, dry","1 plate",320,6,34,18],
+["Chilli paneer","1 plate",360,16,18,25],
+["Chilli chicken","1 plate",380,26,16,23],
+["Honey chilli potato","1 plate",400,4,52,20],
+["Crispy chilli baby corn","1 plate",320,5,38,16],
+["Kung pao chicken","1 bowl",380,28,16,22],
+["Sweet and sour chicken","1 bowl",450,22,48,19],
+["Orange chicken","1 bowl",480,22,52,20],
+["General Tso's chicken","1 bowl",500,24,50,22],
+["Beef and broccoli","1 bowl",350,26,16,20],
+["Mapo tofu","1 bowl",300,18,10,21],
+["Tofu stir-fry","1 bowl",250,16,12,15],
+["Stir-fried bok choy","1 bowl",80,3,6,5],
+["Peking duck with pancakes","3 pancakes",380,20,24,22],
+["Char siu pork","100 g",290,25,12,15],
+["Dim sum, har gow","4",180,9,24,5],
+["Dim sum, siu mai","4",220,12,14,13],
+["Chicken gyoza / potstickers","5",220,10,24,9],
+["Veg spring rolls, fried","2",200,4,24,10],
+["Steamed veg bao","1",150,4,26,3],
+["Char siu bao","1",220,8,32,6],
+["Congee, plain","1 bowl",120,3,26,0.5],
+["Chicken congee","1 bowl",220,14,28,5],
+["Hot and sour soup","1 bowl",120,6,12,5],
+["Sweet corn soup","1 bowl",140,4,22,4],
+["Manchow soup","1 bowl",150,5,16,7],
+["Wonton soup","1 bowl",200,12,22,6],
+["Dan dan noodles","1 bowl",550,20,60,25],
+["Lo mein","1 plate",450,16,62,15],
+["Egg drop soup","1 bowl",70,4,6,3]
+],
+"Japanese":[
+["Salmon nigiri","2 pieces",120,7,15,3.5],
+["Tuna nigiri","2 pieces",110,9,15,1],
+["Salmon maki","6 pieces",200,9,28,5],
+["California roll","6 pieces",250,8,34,9],
+["Avocado cucumber maki","6 pieces",180,4,32,4],
+["Spicy tuna roll","6 pieces",290,12,34,11],
+["Salmon sashimi","5 slices",170,18,0,11],
+["Onigiri, tuna mayo","1",200,6,36,4],
+["Shoyu ramen","1 bowl",450,20,60,14],
+["Tonkotsu ramen","1 bowl",650,28,65,30],
+["Miso ramen","1 bowl",520,22,68,17],
+["Ramen with egg","1 bowl",480,18,65,15],
+["Udon in broth","1 bowl",350,12,64,3],
+["Tempura udon","1 bowl",480,14,72,15],
+["Cold soba with dipping sauce","1 plate",320,13,62,2],
+["Chicken katsu curry","1 plate",750,32,95,26],
+["Chicken teriyaki with rice","1 bowl",520,30,70,11],
+["Oyakodon","1 bowl",600,30,82,15],
+["Gyudon","1 bowl",650,26,84,22],
+["Chicken karaage","5 pieces",320,22,12,20],
+["Yakitori","3 skewers",210,24,8,9],
+["Prawn tempura","4 pieces",260,12,20,15],
+["Vegetable tempura","5 pieces",250,4,26,15],
+["Okonomiyaki","1",450,16,48,22],
+["Takoyaki","6",280,10,32,12],
+["Miso soup","1 bowl",40,3,5,1],
+["Edamame","1 cup",190,17,14,8],
+["Agedashi tofu","1 serving",200,10,12,13],
+["Tamagoyaki","3 slices",150,9,6,10],
+["Seaweed salad","1/2 cup",70,1,10,3],
+["Mochi","1",100,1,23,0.3],
+["Matcha latte","1 cup",190,8,26,6]
+],
+"Korean":[
+["Bibimbap with egg","1 bowl",520,16,80,14],
+["Dolsot bibimbap with beef","1 bowl",600,24,82,19],
+["Kimchi fried rice","1 plate",450,12,64,16],
+["Kimbap","1 roll (8 pieces)",400,12,64,10],
+["Bulgogi beef","1 serving",350,28,16,19],
+["Dak galbi","1 serving",420,32,24,22],
+["Korean fried chicken","4 pieces",480,28,26,29],
+["Japchae","1 cup",320,8,46,12],
+["Tteokbokki","1 bowl",380,8,75,5],
+["Kimchi jjigae","1 bowl",250,16,12,15],
+["Sundubu jjigae","1 bowl",280,18,12,17],
+["Doenjang jjigae","1 bowl",180,12,14,8],
+["Samgyeopsal (pork belly)","100 g",520,14,0,51],
+["Haemul pajeon (seafood pancake)","1/2 pancake",350,14,40,15],
+["Kimchi","1/2 cup",15,1,2,0.3],
+["Korean instant ramyeon","1 pack",500,10,79,16],
+["Hotteok","1",230,3,40,7],
+["Bingsu","1 bowl",450,8,80,10]
+],
+"Thai":[
+["Pad thai, chicken","1 plate",550,25,70,18],
+["Pad thai, prawn","1 plate",520,24,70,16],
+["Pad thai, tofu","1 plate",500,16,72,16],
+["Pad see ew","1 plate",600,22,80,20],
+["Pad kra pao chicken with rice","1 plate",580,30,70,19],
+["Thai fried rice","1 plate",500,16,70,16],
+["Thai green curry, chicken","1 bowl",380,22,10,28],
+["Thai green curry, veg","1 bowl",300,7,14,24],
+["Thai red curry, chicken","1 bowl",400,22,12,29],
+["Massaman curry, chicken","1 bowl",480,24,24,32],
+["Panang curry","1 bowl",420,22,12,32],
+["Tom yum goong","1 bowl",120,12,8,4],
+["Tom yum veg soup","1 bowl",100,3,10,5],
+["Tom kha gai","1 bowl",280,16,8,21],
+["Som tam (papaya salad)","1 plate",100,3,18,2],
+["Larb gai","1 plate",220,24,8,10],
+["Thai basil tofu","1 plate",300,16,14,20],
+["Jasmine rice","1 cup cooked",205,4,45,0.4],
+["Sticky rice","1 cup",235,5,51,0.4],
+["Chicken satay with peanut sauce","4 skewers",320,28,8,19],
+["Thai spring rolls, fried","3",240,4,28,12],
+["Mango sticky rice","1 serving",400,5,70,12],
+["Thai iced tea","1 glass",220,2,40,6]
+],
+"Vietnamese":[
+["Chicken pho","1 bowl",400,28,50,8],
+["Beef pho","1 bowl",450,30,52,12],
+["Vegetable pho","1 bowl",320,10,58,5],
+["Bun cha","1 bowl",500,25,58,18],
+["Bun bo Hue","1 bowl",520,30,56,18],
+["Chicken banh mi","1",480,25,55,17],
+["Pork banh mi","1",520,24,55,22],
+["Tofu banh mi","1",420,15,58,14],
+["Veg summer rolls","2",180,5,32,3],
+["Prawn summer rolls","2",200,12,30,3],
+["Vietnamese fried spring rolls (cha gio)","3",270,9,22,16],
+["Com tam (broken rice with pork)","1 plate",650,32,72,24],
+["Banh xeo","1",380,12,38,20],
+["Vietnamese iced coffee","1 glass",160,3,25,5]
+],
+"Indonesian, Malaysian & Filipino":[
+["Nasi goreng with egg","1 plate",520,16,70,18],
+["Mee goreng","1 plate",520,16,68,20],
+["Nasi lemak","1 plate",650,20,80,28],
+["Chicken rendang","1 serving",380,30,8,25],
+["Beef rendang","1 serving",450,30,8,33],
+["Gado-gado","1 plate",400,16,30,25],
+["Tempeh, fried","100 g",290,18,10,20],
+["Tempeh, plain","100 g",195,20,8,11],
+["Laksa","1 bowl",600,24,58,30],
+["Char kway teow","1 plate",740,22,76,38],
+["Hainanese chicken rice","1 plate",600,32,70,20],
+["Roti canai with dhal","1 serving",420,10,50,20],
+["Satay sauce","2 tbsp",90,3,5,7],
+["Chicken adobo","1 serving",350,30,4,23],
+["Pork adobo","1 serving",450,26,4,36],
+["Pancit canton","1 plate",420,16,58,13],
+["Sinigang (pork)","1 bowl",280,20,10,17],
+["Lumpia shanghai","4",280,10,20,17],
+["Chicken tinola","1 bowl",220,24,8,10],
+["Halo-halo","1 glass",350,6,68,7]
+],
+"Middle Eastern":[
+["Hummus","1/4 cup",150,5,12,10],
+["Pita bread","1",165,5.5,33,1],
+["Lavash","1",140,4.5,28,1],
+["Falafel","4",230,9,22,12],
+["Falafel wrap","1",480,15,60,20],
+["Chicken shawarma wrap","1",520,32,45,22],
+["Chicken shawarma plate","1 plate",700,40,70,28],
+["Lamb shawarma wrap","1",600,30,45,32],
+["Chicken kebab","2 skewers",250,34,3,11],
+["Shish taouk","2 skewers",280,36,4,13],
+["Lamb kofta","3",330,20,4,26],
+["Adana kebab","1 skewer",350,22,3,28],
+["Doner kebab in bread","1",650,32,55,32],
+["Mixed grill platter","1 plate",800,65,20,50],
+["Tabbouleh","1 cup",180,3,16,12],
+["Fattoush","1 bowl",200,3,20,12],
+["Baba ganoush","1/4 cup",90,2,6,7],
+["Muhammara","1/4 cup",160,3,10,12],
+["Mutabal","1/4 cup",110,3,6,8],
+["Labneh","2 tbsp",60,2,1.5,5],
+["Shakshuka","2 eggs",280,15,14,18],
+["Ful medames","1 cup",250,14,34,7],
+["Lentil soup (shorba)","1 bowl",200,12,30,4],
+["Mujaddara","1 cup",320,12,52,8],
+["Kibbeh, fried","2",300,14,22,18],
+["Dolma (stuffed vine leaves)","4",160,3,20,8],
+["Manakish za'atar","1",350,8,46,15],
+["Lahmacun","1",280,13,34,10],
+["Turkish pide, cheese","1/2",450,18,55,17],
+["Lamb biryani (mandi)","1 plate",700,35,80,26],
+["Kabsa, chicken","1 plate",650,35,80,20],
+["Koshari","1 plate",550,18,98,10],
+["Couscous, cooked","1 cup",175,6,36,0.3],
+["Bulgur, cooked","1 cup",150,5.5,34,0.4],
+["Tahini","1 tbsp",90,2.6,3,8],
+["Baklava","1 piece",230,4,26,13],
+["Kunafa","1 piece",400,8,44,22],
+["Turkish delight","2 pieces",80,0,20,0],
+["Halva","30 g",160,4,18,9],
+["Ayran","1 glass",80,4,6,4],
+["Turkish coffee","1 cup",50,0.5,8,1.5],
+["Medjool dates","2",135,1,36,0]
+],
+"African":[
+["Jollof rice","1 plate",400,8,65,12],
+["Egusi soup","1 bowl",450,22,10,36],
+["Pounded yam / fufu","1 cup",330,3,78,0.5],
+["Ugali","1 cup",230,5,50,1],
+["Suya (spiced beef skewers)","1 serving",300,30,4,18],
+["Puff-puff","4",280,4,38,12],
+["Chin chin","30 g",150,2.5,19,7],
+["Plantain, fried","1 cup",360,1.5,58,14],
+["Moi moi","1 wrap",220,12,20,10],
+["Injera","1",180,6,36,1],
+["Misir wot","1 cup",230,13,34,5],
+["Doro wat","1 serving",400,30,12,26],
+["Shiro","1 cup",250,12,30,9],
+["Chicken tagine","1 bowl",350,30,20,16],
+["Lamb tagine with apricots","1 bowl",450,28,30,24],
+["Harira soup","1 bowl",220,12,30,6],
+["Bunny chow","1/4 loaf",700,22,90,28],
+["Bobotie","1 serving",420,24,22,26],
+["Chakalaka","1/2 cup",90,3,14,3],
+["Peri peri chicken","1/4 chicken",380,38,2,24],
+["Sukuma wiki","1 cup",90,3,8,5],
+["Chapati, East African","1",250,5,36,9],
+["Mandazi","2",280,5,38,12],
+["Pap with chakalaka","1 plate",320,8,60,5]
+],
+"Italian":[
+["Spaghetti pomodoro","1 plate",380,12,68,7],
+["Spaghetti bolognese","1 plate",560,28,72,17],
+["Spaghetti carbonara","1 plate",650,26,72,28],
+["Penne arrabbiata","1 plate",400,12,70,8],
+["Pasta alfredo","1 plate",600,16,65,30],
+["Pasta with pesto","1 plate",520,14,62,24],
+["Aglio e olio","1 plate",450,11,64,16],
+["Chicken pasta in pink sauce","1 plate",620,32,68,24],
+["Seafood linguine","1 plate",520,28,68,14],
+["Cacio e pepe","1 plate",550,20,68,21],
+["Lasagne, beef","1 piece",450,26,36,22],
+["Veg lasagne","1 piece",380,18,38,17],
+["Ravioli, cheese, in tomato sauce","1 plate",420,18,50,16],
+["Gnocchi in tomato sauce","1 plate",400,9,72,8],
+["Mushroom risotto","1 plate",420,10,60,14],
+["Margherita pizza","1 slice",250,10,32,9],
+["Pepperoni pizza","1 slice",300,12,32,13],
+["Veggie pizza","1 slice",240,10,32,8],
+["Chicken tikka pizza","1 slice",280,14,32,11],
+["Calzone","1",800,35,90,32],
+["Bruschetta","2",180,5,26,6],
+["Garlic bread","2 slices",200,4,24,10],
+["Focaccia","1 piece",250,6,34,10],
+["Caprese salad","1 plate",280,15,6,22],
+["Minestrone","1 bowl",130,5,20,3],
+["Chicken parmigiana","1 serving",550,40,24,32],
+["Eggplant parmigiana","1 serving",380,14,24,26],
+["Arancini","2",360,10,40,18],
+["Polenta, soft","1 cup",220,5,34,7],
+["Tiramisu","1 slice",450,7,40,28],
+["Panna cotta","1",280,3,24,19],
+["Gelato","1 scoop",160,3,22,7],
+["Cannoli","1",220,5,24,12],
+["Espresso","1 shot",2,0.1,0,0]
+],
+"French":[
+["Croissant","1",270,5,31,14],
+["Pain au chocolat","1",300,5,34,16],
+["Baguette","1/4 loaf",165,5.5,33,1],
+["Croque monsieur","1",500,28,34,28],
+["Quiche lorraine","1 slice",450,14,24,33],
+["Veg quiche","1 slice",350,11,24,24],
+["French onion soup","1 bowl",380,16,32,20],
+["Ratatouille","1 cup",120,2.5,14,7],
+["Coq au vin","1 serving",450,38,10,25],
+["Beef bourguignon","1 serving",500,38,12,30],
+["Chicken cordon bleu","1",500,38,18,30],
+["Salade niçoise","1 bowl",450,28,18,30],
+["Crêpe, plain","1",110,3.5,14,4.5],
+["Crêpe with Nutella","1",280,5,34,14],
+["Galette, ham and cheese","1",420,22,36,20],
+["Gratin dauphinois","1 cup",320,8,26,21],
+["Crème brûlée","1",350,5,30,23],
+["Macarons","2",160,3,22,7],
+["Éclair","1",260,5,28,14],
+["Madeleines","2",200,3,24,10]
+],
+"Spanish, Portuguese & Greek":[
+["Paella, seafood","1 plate",550,30,70,16],
+["Paella, chicken","1 plate",580,32,70,18],
+["Spanish omelette","1 slice",220,9,14,14],
+["Patatas bravas","1 plate",350,5,40,19],
+["Gambas al ajillo","1 serving",280,24,3,19],
+["Gazpacho","1 bowl",120,2,12,7],
+["Croquetas","3",250,8,22,14],
+["Jamón serrano","30 g",70,9,0,4],
+["Churros with chocolate","4 + dip",450,6,56,23],
+["Pastel de nata","1",220,4,26,11],
+["Bacalhau à brás","1 plate",450,28,22,28],
+["Caldo verde","1 bowl",200,8,20,10],
+["Piri piri chicken (Portuguese)","1/4 chicken",380,38,2,24],
+["Greek salad","1 bowl",220,6,10,18],
+["Chicken souvlaki","2 skewers",280,34,4,14],
+["Chicken gyro wrap","1",550,30,52,24],
+["Moussaka","1 serving",450,20,24,30],
+["Spanakopita","1 piece",300,8,24,19],
+["Tzatziki","1/4 cup",60,3,3,4.5],
+["Feta cheese","30 g",75,4,1,6],
+["Dolmades","4",160,3,20,8],
+["Greek lentil soup (fakes)","1 bowl",230,13,32,6],
+["Loukoumades","5",300,4,40,14]
+],
+"British & European":[
+["Full English breakfast","1 plate",800,40,40,52],
+["Beans on toast","1 serving",300,12,48,6],
+["Fish and chips","1 serving",850,35,85,42],
+["Shepherd's pie","1 serving",450,24,32,25],
+["Cottage pie","1 serving",450,24,32,25],
+["Bangers and mash","2 sausages + mash",650,24,45,40],
+["Chicken pot pie","1 serving",600,24,45,35],
+["Sunday roast chicken with veg","1 plate",600,45,40,26],
+["Cornish pasty","1",600,15,55,35],
+["Jacket potato with beans and cheese","1",480,20,70,14],
+["Scone with jam and cream","1",400,6,48,20],
+["Sticky toffee pudding","1 serving",450,4,64,20],
+["Chicken schnitzel","1",450,35,25,23],
+["Wiener schnitzel (veal)","1",450,32,25,24],
+["Bratwurst","1",280,12,2,25],
+["Pretzel","1 large",380,10,78,3],
+["Potato salad, German","1 cup",250,4,30,13],
+["Sauerkraut","1/2 cup",15,0.7,3,0.1],
+["Goulash","1 bowl",380,28,20,20],
+["Pierogi, potato and cheese","6",380,12,58,10],
+["Borscht","1 bowl",140,4,18,6],
+["Beef stroganoff","1 serving",450,30,15,30],
+["Swedish meatballs","6 + gravy",420,22,16,30],
+["Smørrebrød (open sandwich)","1",280,12,24,15],
+["Rösti","1",250,4,28,14],
+["Cheese fondue with bread","1 serving",650,30,50,35],
+["Apple strudel","1 slice",320,4,44,15],
+["Black Forest cake","1 slice",400,5,46,22]
+],
+"American":[
+["Cheeseburger","1",550,30,40,30],
+["Double cheeseburger","1",800,48,42,48],
+["Veg burger","1",390,15,45,16],
+["Chicken burger","1",450,24,42,20],
+["Crispy chicken burger","1",550,25,50,27],
+["Hot dog","1",300,11,24,18],
+["BBQ pork ribs","1/2 rack",650,45,20,43],
+["Pulled pork sandwich","1",550,30,50,24],
+["Steak, sirloin","200 g",400,52,0,20],
+["Fried chicken","1 piece",250,18,9,16],
+["Chicken nuggets","6",270,14,16,17],
+["Buffalo chicken wings","6",430,36,2,31],
+["Mac and cheese","1 cup",400,15,45,18],
+["Clam chowder","1 bowl",300,10,22,19],
+["Chicken noodle soup","1 bowl",150,10,16,4.5],
+["Cobb salad","1 bowl",550,35,12,40],
+["Chicken Caesar salad","1 bowl",400,28,14,26],
+["Coleslaw","1/2 cup",150,1,12,11],
+["Cornbread","1 piece",200,4,28,8],
+["Biscuits and gravy","1 serving",500,12,40,32],
+["BLT sandwich","1",400,16,30,24],
+["Club sandwich","1",600,32,45,32],
+["Grilled cheese sandwich","1",370,13,30,22],
+["Philly cheesesteak","1",650,38,55,30],
+["Tuna melt","1",500,28,30,29],
+["Chicken quesadilla (Tex-Mex)","1",550,32,40,28],
+["Chili con carne","1 bowl",350,25,25,16],
+["Meatloaf","1 slice",300,20,10,20],
+["Poke bowl, salmon","1 bowl",550,28,65,18],
+["Burrito bowl, chicken","1 bowl",650,40,70,22],
+["Apple pie","1 slice",400,3,58,18],
+["Pumpkin pie","1 slice",320,6,40,15],
+["New York cheesecake","1 slice",450,8,34,32],
+["Brownie","1",240,3,32,12],
+["Chocolate chip cookie","1",150,2,20,7.5],
+["Milkshake, chocolate","1 medium",530,12,80,18]
+],
+"Mexican & Latin American":[
+["Chicken tacos","2",340,22,30,14],
+["Beef tacos","2",400,22,30,22],
+["Fish tacos","2",380,22,36,16],
+["Bean and rice burrito","1",480,16,72,14],
+["Chicken burrito","1",600,34,68,20],
+["Beef burrito","1",680,34,68,30],
+["Cheese quesadilla","1",470,19,38,27],
+["Chicken enchiladas","2",500,30,36,26],
+["Chicken fajitas with tortillas","1 serving",550,38,48,22],
+["Tamales, pork","2",450,16,38,26],
+["Pozole","1 bowl",350,24,30,14],
+["Huevos rancheros","1 plate",450,20,40,24],
+["Chilaquiles","1 plate",550,18,52,30],
+["Elote (Mexican street corn)","1",250,6,28,14],
+["Nachos with cheese","1 small plate",350,9,36,19],
+["Loaded nachos","1 plate",700,25,60,40],
+["Guacamole","1/4 cup",95,1,5,8.5],
+["Salsa","1/4 cup",20,1,4,0.1],
+["Sour cream","2 tbsp",60,0.7,1,6],
+["Refried beans","1/2 cup",120,7,18,2],
+["Black beans","1 cup",225,15,40,1],
+["Mexican rice","1 cup",250,5,45,6],
+["Corn tortilla","1",55,1.5,11,0.7],
+["Flour tortilla","1 large",210,5,35,5],
+["Arepa with cheese","1",300,10,36,13],
+["Cheese empanada","1",280,7,30,15],
+["Beef empanada","1",320,12,30,17],
+["Feijoada","1 bowl",500,32,30,28],
+["Pão de queijo","3",210,5,24,10],
+["Coxinha","1",250,10,24,13],
+["Ceviche","1 cup",160,24,8,3],
+["Lomo saltado","1 plate",650,34,60,30],
+["Gallo pinto","1 cup",250,9,42,5],
+["Picanha","150 g",430,38,0,30],
+["Churros","3",330,4,36,19],
+["Tres leches cake","1 slice",400,8,55,16],
+["Flan","1 slice",250,7,38,8],
+["Açaí bowl","1 bowl",450,7,80,13],
+["Horchata","1 glass",200,1,40,4]
+],
+"Caribbean":[
+["Jerk chicken","1/4 chicken",380,36,6,23],
+["Rice and peas","1 cup",300,8,52,7],
+["Curry goat","1 serving",400,30,8,28],
+["Ackee and saltfish","1 serving",380,22,8,29],
+["Jamaican beef patty","1",450,14,40,26],
+["Doubles (Trinidad)","1",300,8,40,12],
+["Roti with curry chicken (Trini)","1",650,32,66,28],
+["Callaloo","1 cup",120,4,8,8],
+["Festival (fried dumpling)","2",260,4,40,10],
+["Plantain, ripe, baked","1 cup",210,2,56,0.5],
+["Cuban sandwich","1",650,38,48,34],
+["Ropa vieja","1 serving",350,32,10,20],
+["Mofongo","1 cup",450,6,60,22]
+],
+"Fish & seafood":[
+["Rohu curry","1 piece + gravy",220,19,6,13],
+["Rohu, fried","1 piece",200,18,2,13],
+["Hilsa (ilish) bhapa","1 piece",320,20,3,26],
+["Hilsa, fried","1 piece",330,20,2,27],
+["Shorshe ilish","1 piece + gravy",380,21,5,31],
+["Katla curry","1 piece + gravy",220,19,6,13],
+["Pomfret, fried","1 medium",280,24,6,18],
+["Pomfret, tandoori","1 medium",220,26,3,11],
+["Bombil fry","4",250,16,12,15],
+["Surmai fry","1 steak",280,26,6,17],
+["Fish fry, Kerala style","1 piece",230,22,4,14],
+["Meen moilee","1 piece + gravy",280,20,6,20],
+["Prawn malai curry","1 katori",320,20,8,23],
+["Chingri bhapa","1 katori",280,22,4,19],
+["Prawn masala","1 katori",240,22,8,13],
+["Prawn fry","8 prawns",220,20,8,12],
+["Crab curry","1 katori",260,20,8,16],
+["Fish tikka","6 pieces",220,28,4,10],
+["Amritsari fish","6 pieces",320,24,16,18],
+["Fish biryani","1 plate",480,24,58,16],
+["Prawn biryani","1 plate",480,24,58,16],
+["Shutki (dried fish) bhorta","2 tbsp",90,7,2,6],
+["Salmon, baked","150 g",310,33,0,19],
+["Salmon, smoked","50 g",60,9,0,2.2],
+["Tuna, canned in water","1 can (120 g)",130,29,0,1],
+["Tuna, canned in oil","1 can (120 g)",230,30,0,12],
+["Sardines, canned","1 can (90 g)",190,22,0,11],
+["Mackerel, grilled","150 g",380,35,0,27],
+["Cod, baked","150 g",160,34,0,1.4],
+["Tilapia, grilled","150 g",190,39,0,4],
+["Basa fillet, pan-fried","150 g",210,24,0,12],
+["Fish fingers","4",240,12,20,12],
+["Prawns, boiled","100 g",100,24,0,0.3],
+["Garlic butter prawns","1 serving",280,24,2,19],
+["Fried calamari","1 cup",300,16,20,17],
+["Grilled squid","100 g",150,25,4,3],
+["Mussels, steamed","1 cup",150,20,6,4],
+["Oysters, raw","6",50,6,3,1.5],
+["Lobster, steamed","1 tail",140,28,1,1.5],
+["Crab, steamed","100 g",100,20,0,1.5],
+["Fish curry with coconut (Thai)","1 bowl",380,26,10,26],
+["Prawn tempura","4 pieces",260,12,20,15]
+],
+"Meat & poultry":[
+["Chicken breast, grilled","100 g",165,31,0,3.6],
+["Chicken thigh, grilled","100 g",210,26,0,11],
+["Chicken drumstick, roasted","1",120,14,0,7],
+["Chicken, boiled shredded","100 g",150,28,0,3.5],
+["Rotisserie chicken","1/4 chicken",330,35,0,20],
+["Chicken liver fry","1 katori",200,20,4,11],
+["Chicken sausage","2",180,14,4,12],
+["Chicken salami","3 slices",90,8,2,5],
+["Turkey breast, roasted","100 g",135,30,0,1],
+["Duck, roasted","100 g",340,19,0,28],
+["Mutton, cooked lean","100 g",230,28,0,13],
+["Lamb chops, grilled","2",360,26,0,28],
+["Mutton keema, cooked","100 g",280,22,2,20],
+["Goat curry","1 katori",320,24,6,22],
+["Pork chop, grilled","1",280,32,0,16],
+["Pork belly, roasted","100 g",520,14,0,51],
+["Bacon","2 rashers",90,6,0,7],
+["Ham","2 slices",60,9,1,2],
+["Pork sausage","2",320,13,2,29],
+["Pepperoni","15 slices",140,6,0,13],
+["Beef steak, lean, grilled","100 g",200,30,0,8],
+["Beef mince, cooked","100 g",250,26,0,16],
+["Roast beef","100 g",190,28,0,8],
+["Beef jerky","30 g",115,10,9,3.5],
+["Buff (buffalo) meat curry","1 katori",280,26,5,17]
+],
+"Breakfast & bakery":[
+["Toast with butter","1 slice",105,2.5,13,5],
+["Toast with jam","1 slice",120,2.5,23,1],
+["Avocado toast","1 slice",200,5,20,12],
+["Peanut butter toast","1 slice",165,6.5,16,9],
+["French toast","2 slices",300,11,34,13],
+["Egg sandwich","1",320,14,30,16],
+["Cheese sandwich","1",320,12,30,17],
+["Veg sandwich","1",250,8,38,7],
+["Grilled chicken sandwich","1",380,28,38,12],
+["Bombay masala toast sandwich","1",380,10,48,16],
+["Oats with milk","1 bowl",220,9,32,6],
+["Oats with water","1 bowl",150,5,27,3],
+["Masala oats","1 bowl",180,5,28,5],
+["Overnight oats with fruit","1 jar",350,12,55,9],
+["Cornflakes with milk","1 bowl",190,7,34,3],
+["Chocos with milk","1 bowl",220,7,40,4],
+["Muesli with milk","1 bowl",250,9,42,6],
+["Granola","1/2 cup",240,6,36,9],
+["Pancakes with syrup","2",350,6,62,9],
+["Waffle","1",220,6,25,11],
+["Bagel, plain","1",280,11,55,1.5],
+["Bagel with cream cheese","1",360,11,55,11],
+["English muffin","1",135,4.5,26,1],
+["Blueberry muffin","1",380,5,55,16],
+["Banana bread","1 slice",250,3.5,36,10],
+["Cinnamon roll","1",420,6,60,17],
+["Danish pastry","1",350,5,40,19],
+["Doughnut, glazed","1",250,3.5,30,13],
+["Puff pastry, veg (veg puff)","1",270,4,26,17],
+["Egg puff","1",300,9,26,18],
+["Chicken puff","1",320,10,26,19],
+["Rusk","2",100,2.5,18,2],
+["Cream roll","1",200,2.5,24,10],
+["Fruit smoothie","1 glass",180,4,38,2],
+["Protein shake in water","1 scoop",120,24,3,1.5],
+["Protein shake in milk","1 scoop + 1 glass",270,32,15,9.5],
+["Protein bar","1",200,20,22,7]
+],
+"Grains, breads & pulses":[
+["White bread","1 slice",70,2.5,13,1],
+["Brown / whole wheat bread","1 slice",70,3.5,12,1],
+["Multigrain bread","1 slice",80,4,13,1.5],
+["Sourdough bread","1 slice",120,4.5,23,0.8],
+["Pav / dinner roll","1",120,4,22,2],
+["Burger bun","1",140,4.5,25,2],
+["Basmati rice","1 cup cooked",210,4.5,46,0.5],
+["Brown rice","1 cup cooked",215,5,45,1.8],
+["Red rice","1 cup cooked",210,5,45,1],
+["Fried rice, plain","1 cup",240,4.5,40,7],
+["Quinoa","1 cup cooked",220,8,39,3.5],
+["Millet (bajra/ragi), cooked","1 cup",200,6,41,1.7],
+["Ragi mudde","1 ball",250,6,52,1.5],
+["Broken wheat (dalia), cooked","1 bowl",150,5,32,0.5],
+["Pasta, plain cooked","1 cup",220,8,43,1.3],
+["Noodles, egg, cooked","1 cup",220,7,40,3.3],
+["Rice noodles, cooked","1 cup",190,3,42,0.4],
+["Couscous","1 cup cooked",175,6,36,0.3],
+["Barley, cooked","1 cup",190,3.5,44,0.7],
+["Chickpeas, boiled","1 cup",270,15,45,4],
+["Kidney beans, boiled","1 cup",225,15,40,1],
+["Lentils, boiled","1 cup",230,18,40,0.8],
+["Moong sprouts","1 cup",30,3,6,0.2],
+["Green peas, boiled","1 cup",120,8,21,0.6],
+["Soya chunks, dry","30 g",105,16,10,0.2],
+["Baked beans","1/2 cup",140,6,26,0.5],
+["Besan (gram flour)","2 tbsp",65,4,10,1],
+["Atta (whole wheat flour)","1/4 cup",110,4,23,0.6],
+["Maida","1/4 cup",115,3,24,0.3],
+["Sooji / rava","2 tbsp",65,2,13,0.2],
+["Poha, dry","1/2 cup",130,2.5,30,0.3],
+["Sabudana, dry","1/4 cup",135,0,34,0]
+],
+"Dairy & eggs":[
+["Boiled egg","1",78,6,0.6,5],
+["Egg white","1",17,3.6,0.2,0.1],
+["Fried egg","1",90,6,0.4,7],
+["Poached egg","1",72,6,0.4,5],
+["Scrambled eggs","2 eggs",180,12,2,14],
+["Omelette","2 eggs",190,13,1,15],
+["Masala omelette","2 eggs",210,13,4,16],
+["Cheese omelette","2 eggs",280,19,1,22],
+["Egg white omelette","3 whites",70,11,1,2],
+["Duck egg, boiled","1",130,9,1,10],
+["Milk, full cream","1 glass",180,8,12,10],
+["Milk, toned","1 glass",150,8,12,8],
+["Milk, double toned","1 glass",115,8,12,4],
+["Milk, skimmed","1 glass",85,8,12,0.4],
+["Curd, low fat","1 katori",45,4,6,0.5],
+["Greek yoghurt, plain","170 g",165,15,7,9],
+["Greek yoghurt, low fat","170 g",100,17,6,0.7],
+["Flavoured yoghurt","1 cup",150,5,24,3.5],
+["Paneer, plain","100 g",265,18,3,20],
+["Low-fat paneer","100 g",180,20,4,9],
+["Cheddar cheese","30 g",120,7,0.5,10],
+["Processed cheese slice","1",60,3.5,1.5,4.5],
+["Mozzarella","30 g",85,6,1,6],
+["Parmesan","1 tbsp grated",22,2,0.2,1.4],
+["Cottage cheese","1/2 cup",110,12,4,5],
+["Cream cheese","2 tbsp",100,2,1.5,10],
+["Fresh cream","2 tbsp",100,0.6,1,10],
+["Khoa / mawa","30 g",125,6,6,9],
+["Ghee","1 tsp",45,0,0,5],
+["Butter","1 tsp",35,0,0,4],
+["Condensed milk","1 tbsp",60,1.5,10,1.6]
+],
+"Vegetables":[
+["Green salad","1 bowl",30,1.5,6,0.2],
+["Cucumber","1 medium",30,1.3,7,0.2],
+["Tomato","1 medium",22,1,5,0.2],
+["Carrot","1 medium",25,0.6,6,0.1],
+["Beetroot, boiled","1/2 cup",35,1.3,8,0.1],
+["Onion","1 medium",44,1.2,10,0.1],
+["Spinach, cooked","1 cup",40,5,7,0.5],
+["Broccoli, steamed","1 cup",55,4,11,0.6],
+["Cauliflower, steamed","1 cup",30,2,5,0.3],
+["Cabbage, cooked","1 cup",35,2,8,0.1],
+["Mushrooms, sautéed","1 cup",80,3.5,4,6],
+["Bell pepper","1 medium",30,1,7,0.3],
+["Zucchini, sautéed","1 cup",60,2,6,3.5],
+["Green beans","1 cup",45,2.5,10,0.3],
+["Okra (bhindi), boiled","1 cup",35,2,7,0.3],
+["Bitter gourd (karela) fry","1 katori",130,2,10,9],
+["Pumpkin, cooked","1 cup",50,2,12,0.2],
+["Bottle gourd (lauki), boiled","1 cup",25,1,6,0.1],
+["Sweet potato, boiled","1 medium",115,2,27,0.1],
+["Boiled potato","1 medium",130,3,30,0.2],
+["Mashed potato","1 cup",210,4,35,7],
+["Roast potatoes","1 cup",250,4,34,11],
+["Corn on the cob","1",90,3,19,1.4],
+["Sweet corn, boiled","1 cup",130,5,29,2],
+["Grilled vegetables","1 cup",120,3,12,7],
+["Stir-fried mixed veg","1 cup",110,3,10,7],
+["Coleslaw","1/2 cup",150,1,12,11],
+["Vegetable soup","1 bowl",80,3,14,1.5],
+["Tomato soup","1 bowl",110,2,18,3.5],
+["Cream of mushroom soup","1 bowl",200,4,15,14],
+["Lentil vegetable soup","1 bowl",160,9,26,2.5],
+["Bamboo shoot, cooked","1 cup",15,2,2,0.3],
+["Jackfruit curry (raw)","1 katori",150,3,22,6],
+["Banana flower (mocha), cooked","1 katori",90,2.5,12,4]
+],
+"Fruit":[
+["Banana","1 medium",105,1.3,27,0.4],
+["Apple","1 medium",95,0.5,25,0.3],
+["Orange","1",62,1.2,15,0.2],
+["Kinnow / mandarin","1",50,0.8,13,0.3],
+["Sweet lime (mosambi)","1",45,0.8,11,0.2],
+["Mango","1 cup",100,1.4,25,0.6],
+["Papaya","1 cup",62,0.7,16,0.4],
+["Pineapple","1 cup",82,1,22,0.2],
+["Watermelon","1 cup",46,1,11.5,0.2],
+["Muskmelon","1 cup",55,1.3,13,0.3],
+["Grapes","1 cup",104,1,27,0.2],
+["Guava","1",37,1.4,8,0.5],
+["Pomegranate arils","1/2 cup",72,1.5,16,1],
+["Pear","1 medium",100,0.6,27,0.2],
+["Peach","1",60,1.4,15,0.4],
+["Plum","2",60,1,15,0.4],
+["Kiwi","1",42,0.8,10,0.4],
+["Strawberries","1 cup",50,1,12,0.5],
+["Blueberries","1 cup",85,1.1,21,0.5],
+["Cherries","1 cup",95,1.6,24,0.3],
+["Chikoo (sapodilla)","1",95,0.5,23,1.2],
+["Custard apple (sitaphal)","1",120,2.5,30,0.4],
+["Jackfruit, ripe","1 cup",155,2.8,40,1],
+["Litchi","10",65,0.8,16,0.4],
+["Jamun","1 cup",80,1,20,0.3],
+["Amla","2",45,0.9,10,0.1],
+["Dragon fruit","1 cup",100,2,22,0.6],
+["Fig, fresh","2",75,0.8,19,0.3],
+["Coconut, fresh","1/2 cup shredded",140,1.3,6,13],
+["Avocado","1/2",160,2,8.5,15],
+["Fruit salad","1 bowl",100,1.5,25,0.4],
+["Raisins","2 tbsp",60,0.6,16,0.1],
+["Dates","2",133,1,36,0],
+["Dried apricots","5",85,1.2,22,0.2],
+["Dried figs (anjeer)","2",95,1.3,24,0.4],
+["Prunes","4",90,0.8,24,0.1]
+],
+"Nuts & seeds":[
+["Almonds","10",70,2.6,2.4,6],
+["Walnuts","30 g",195,4.5,4,19.5],
+["Cashews","30 g",165,5,9,13],
+["Pistachios","30 g",160,6,8,13],
+["Peanuts","30 g",170,7.5,5,14],
+["Masala peanuts","30 g",170,6,8,12],
+["Peanut chikki","1 piece",130,4,15,7],
+["Hazelnuts","30 g",180,4,5,17],
+["Brazil nuts","3",100,2,2,10],
+["Macadamia","30 g",205,2,4,21],
+["Trail mix","30 g",140,4,13,9],
+["Chia seeds","1 tbsp",60,2,5,4],
+["Flax seeds","1 tbsp",55,2,3,4.5],
+["Pumpkin seeds","1 tbsp",50,2.5,1,4],
+["Sunflower seeds","1 tbsp",50,2,2,4.5],
+["Sesame seeds","1 tbsp",50,1.6,2,4.5],
+["Mixed seeds","1 tbsp",55,2,2,4.5],
+["Peanut butter","1 tbsp",95,4,3,8],
+["Almond butter","1 tbsp",100,3.4,3,9]
+],
+"Oils, sauces & spreads":[
+["Mustard oil","1 tbsp",120,0,0,14],
+["Olive oil","1 tbsp",120,0,0,14],
+["Sunflower / vegetable oil","1 tbsp",120,0,0,14],
+["Coconut oil","1 tbsp",120,0,0,14],
+["Mayonnaise","1 tbsp",95,0.1,0.1,10],
+["Tomato ketchup","1 tbsp",20,0.2,5,0],
+["Soy sauce","1 tbsp",10,1,1,0],
+["Schezwan sauce","1 tbsp",45,0.5,4,3],
+["Chilli sauce","1 tbsp",20,0.2,4.5,0.1],
+["Sriracha","1 tsp",5,0.1,1,0.1],
+["BBQ sauce","1 tbsp",30,0,7,0.1],
+["Mustard","1 tsp",5,0.3,0.3,0.3],
+["Pesto","1 tbsp",80,1.5,1,8],
+["Ranch dressing","1 tbsp",65,0.2,1,7],
+["Vinaigrette","1 tbsp",70,0,1,7],
+["Hummus","2 tbsp",70,2,6,5],
+["Tamarind chutney","1 tbsp",40,0.2,10,0],
+["Jam","1 tbsp",55,0,14,0],
+["Honey","1 tbsp",64,0,17,0],
+["Maple syrup","1 tbsp",52,0,13,0],
+["Nutella","1 tbsp",100,1,11,6],
+["Sugar","1 tsp",16,0,4,0],
+["Jaggery","1 tbsp",55,0,14,0],
+["Gravy, brown","1/4 cup",30,1,4,1.5],
+["Cheese sauce","1/4 cup",120,5,4,9]
+],
+"Desserts":[
+["Ice cream, vanilla","1 scoop",140,2.5,16,7.5],
+["Ice cream, chocolate","1 scoop",150,2.5,18,8],
+["Choco bar / ice cream stick","1",200,3,22,11],
+["Sundae","1",350,6,48,15],
+["Frozen yoghurt","1/2 cup",110,3,20,2],
+["Chocolate cake","1 slice",350,4,50,15],
+["Black forest pastry","1",300,4,36,16],
+["Red velvet cake","1 slice",420,5,56,20],
+["Cheesecake","1 slice",400,7,32,28],
+["Cupcake, frosted","1",300,3,42,14],
+["Plum cake","1 slice",250,3,38,10],
+["Custard","1 katori",160,5,26,4],
+["Caramel pudding","1 slice",250,7,38,8],
+["Chocolate mousse","1 cup",300,5,28,19],
+["Lava cake","1",400,6,48,21],
+["Fruit tart","1",280,3,36,14],
+["Waffle with ice cream","1",450,7,58,22],
+["Milk chocolate","40 g",215,3,24,12],
+["Dark chocolate","30 g",170,2,13,12],
+["Chocolate bar (with nuts/caramel)","1 regular",250,4,32,12],
+["Wafer bar","1",110,1.5,13,6]
+],
+"Snacks & packaged":[
+["Marie biscuits","4",90,1.5,16,2.5],
+["Glucose biscuits","4",110,2,18,3.5],
+["Digestive biscuits","2",140,2,20,6],
+["Cream biscuits","3",160,1.5,22,7],
+["Cookies, butter","3",160,2,20,8],
+["Crackers","5",80,1.5,11,3],
+["Potato chips","30 g",160,2,15,10],
+["Baked chips","30 g",120,2,22,2.5],
+["Nachos / tortilla chips","30 g",140,2,18,7],
+["Kurkure-style corn puffs","30 g",160,2,17,9.5],
+["Popcorn, salted","3 cups",140,3,18,7],
+["Butter popcorn","3 cups",180,3,18,11],
+["Caramel popcorn","1 cup",120,1,22,3.5],
+["Pretzels","30 g",110,3,23,1],
+["Rice cakes","2",70,1.5,15,0.5],
+["Granola bar","1",120,2.5,18,4.5],
+["Energy bar, dates and nuts","1",180,5,22,8],
+["Instant cup noodles","1 cup",300,6,40,13],
+["Instant pasta cup","1 cup",280,7,42,9],
+["Ready-to-eat dal","1/2 packet",160,7,18,7],
+["Frozen French fries, baked","1 cup",170,2,26,6],
+["Frozen samosa, fried","1",220,4,26,11]
+],
+"Fast food":[
+["French fries, small","1",230,3,30,11],
+["French fries, medium","1",365,4,48,17],
+["French fries, large","1",490,6,66,23],
+["Peri peri fries","1 medium",390,5,50,19],
+["Aloo tikki burger","1",360,9,48,15],
+["Big burger with cheese","1",560,26,45,30],
+["Fried chicken burger with mayo","1",520,22,48,27],
+["Paneer burger","1",450,15,44,24],
+["Fish fillet burger","1",380,15,38,18],
+["Chicken nuggets","9",420,22,25,26],
+["Fried chicken bucket piece","1",280,20,10,18],
+["Chicken popcorn","1 regular",330,18,20,20],
+["Chicken strips","3",350,26,18,19],
+["Sub sandwich, veg, 6-inch","1",230,9,44,3],
+["Sub sandwich, chicken, 6-inch","1",320,24,45,5],
+["Sub sandwich, cheese & meat, 6-inch","1",420,22,44,18],
+["Pizza, medium cheese","1 slice",210,9,26,8],
+["Pizza, medium chicken","1 slice",250,12,26,11],
+["Pizza, thin crust veg","1 slice",180,7,22,7],
+["Garlic breadsticks","2",220,6,28,9],
+["Taco, crunchy","1",170,8,13,10],
+["Burrito, fast food","1",500,20,62,18],
+["Onion rings","1 medium",320,4,38,17],
+["Hash brown","1",150,1.5,15,9],
+["Apple pie, fried","1",230,2,32,11],
+["Soft serve cone","1",200,5,32,6],
+["McFlurry-style dessert","1 regular",500,12,74,17],
+["Fizzy drink, medium","1",200,0,53,0]
+],
+"Drinks":[
+["Water","1 glass",0,0,0,0],
+["Milk tea with sugar","1 cup",60,1.5,9,2],
+["Milk tea without sugar","1 cup",35,1.5,2.5,2],
+["Masala chai","1 cup",80,2,11,2.5],
+["Black tea, no sugar","1 cup",2,0,0.5,0],
+["Lemon tea","1 cup",35,0,9,0],
+["Green tea","1 cup",2,0,0,0],
+["Herbal tea","1 cup",2,0,0.5,0],
+["Black coffee","1 cup",2,0.3,0,0],
+["Filter coffee","1 cup",90,3,11,3.5],
+["Coffee with milk and sugar","1 cup",70,2,10,2.5],
+["Cappuccino","1 cup",110,6,9,5.5],
+["Latte","1 cup",150,8,12,8],
+["Flat white","1 cup",120,7,9,6],
+["Mocha","1 cup",250,9,35,9],
+["Americano","1 cup",10,0.5,1,0],
+["Iced latte","1 glass",130,7,11,6.5],
+["Frappuccino-style iced coffee","1 grande",380,5,55,15],
+["Cold coffee with ice cream","1 glass",250,6,35,10],
+["Hot chocolate","1 cup",190,8,27,6],
+["Turmeric milk (haldi doodh)","1 glass",170,8,14,9],
+["Badam milk","1 glass",220,8,26,10],
+["Soy milk","1 glass",100,7,8,4],
+["Almond milk, unsweetened","1 glass",35,1,1.5,2.5],
+["Oat milk","1 glass",120,3,16,5],
+["Sweet lassi","1 glass",180,6,28,5],
+["Salted lassi","1 glass",90,5,7,4.5],
+["Mango lassi","1 glass",250,6,42,6],
+["Buttermilk (chaas)","1 glass",40,2,4,1.5],
+["Coconut water","1 glass",45,1.7,9,0.5],
+["Nimbu pani with sugar","1 glass",60,0,16,0],
+["Jaljeera","1 glass",40,0.5,10,0],
+["Aam panna","1 glass",120,0.5,30,0.2],
+["Rooh Afza sharbat","1 glass",100,0,25,0],
+["Sugarcane juice","1 glass",180,0,45,0],
+["Orange juice","1 glass",110,1.7,26,0.5],
+["Apple juice","1 glass",115,0.2,28,0.3],
+["Mixed fruit juice, packaged","1 glass",130,0.5,32,0],
+["Watermelon juice","1 glass",70,1.4,17,0.4],
+["Fresh lime soda, sweet","1 glass",80,0,20,0],
+["Cola","330 ml",140,0,35,0],
+["Diet cola","330 ml",1,0,0,0],
+["Lemon-lime soda","330 ml",140,0,36,0],
+["Energy drink","250 ml",110,0,27,0],
+["Sports drink","500 ml",130,0,34,0],
+["Iced tea, sweetened","1 glass",90,0,23,0],
+["Kombucha","1 bottle",50,0,12,0],
+["Bubble tea","1 cup",300,3,60,6],
+["Milkshake, strawberry","1 glass",350,9,55,10],
+["Thandai","1 glass",250,7,30,12]
+],
+"Alcohol":[
+["Beer, regular","330 ml",140,1.5,11,0],
+["Beer, light","330 ml",100,0.9,6,0],
+["Strong beer","500 ml",300,2.5,24,0],
+["Red wine","150 ml",125,0,4,0],
+["White wine","150 ml",120,0,4,0],
+["Sparkling wine","125 ml",95,0,2,0],
+["Whisky / rum / vodka / gin","30 ml peg",65,0,0,0],
+["Whisky with soda","60 ml + soda",130,0,0,0],
+["Rum and cola","60 ml + cola",250,0,30,0],
+["Gin and tonic","1 glass",170,0,16,0],
+["Mojito","1 glass",200,0,25,0],
+["Margarita","1 glass",270,0,18,0],
+["Piña colada","1 glass",450,1,60,15],
+["Long Island iced tea","1 glass",280,0,33,0],
+["Sangria","1 glass",160,0,20,0],
+["Cider","330 ml",170,0,17,0],
+["Sake","100 ml",135,0.5,5,0],
+["Rice beer (apong / xaaj pani)","1 glass",120,1,12,0]
+]};
+var MINE="My foods";
+var FOODS=[];
+Object.keys(GROUPS).forEach(function(g){GROUPS[g].forEach(function(f){FOODS.push(f.concat([g]))})});
+var MEALS=[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["snacks","Snacks and drinks"]];
+var LS="idli-chutney-v1";
+var state={target:2000,custom:[],days:{}};
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function pad(n){return n<10?"0"+n:""+n}
+function keyOf(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function dateOf(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2])}
+function shift(k,n){var d=dateOf(k);d.setDate(d.getDate()+n);return keyOf(d)}
+function todayKey(){return keyOf(new Date())}
+function r1(n){return Math.round(n*10)/10}
+function num(v){var n=parseFloat(v);return isFinite(n)&&n>=0?n:0}
+function fmt(n){return Math.round(n).toLocaleString("en-IN")}
+
+var cur=todayKey();
+
+/* ---------- pictures ---------- */
+// First matching rule wins, so the more specific words come first.
+var PICS=[
+[/fizzy/,"🥤"],[/açaí|acai/,"🫐"],[/kimbap/,"🍙"],[/tteokbokki/,"🍢"],[/full english/,"🍳"],[/bangers/,"🌭"],[/schnitzel/,"🍗"],
+[/croque/,"🥪"],[/quiche/,"🥧"],[/cannoli|éclair/,"🍰"],[/patatas|mofongo/,"🥔"],[/tzatziki/,"🥣"],[/dolma/,"🥬"],[/chilaquiles/,"🌮"],[/pão de queijo/,"🧀"],
+[/haleem|pappu|litti|doro wat|coq au vin|bunny chow|lomo saltado|dak galbi|larb|ful medames|moi moi/,"🍛"],
+[/flour|atta|maida|besan|sooji|rava$/,"🌾"],[/cauliflower/,"🥦"],[/pumpkin/,"🎃"],[/vegetables|mixed veg/,"🥗"],
+[/bubble tea|boba/,"🧋"],[/coconut water/,"🥥"],[/water$/,"💧"],
+[/beer|apong|xaaj/,"🍺"],[/sparkling/,"🥂"],[/wine|sangria/,"🍷"],[/sake/,"🍶"],
+[/mojito|margarita|colada|long island|cocktail|gin and tonic/,"🍹"],[/whisky|rum|vodka|peg|cider/,"🥃"],
+[/chai|tea\b|tea,|matcha/,"🍵"],[/coffee|latte|cappuccino|espresso|americano|mocha|flat white|frapp/,"☕"],
+[/milkshake|smoothie|shake|lassi|chaas|buttermilk|cola|soda|energy drink|sports drink|sharbat|jaljeera|panna|thandai|kombucha|horchata/,"🥤"],
+[/juice/,"🧃"],[/hot chocolate|haldi doodh|turmeric milk|badam milk/,"☕"],[/milk(?! chocolate)|ayran/,"🥛"],
+[/sushi|maki|nigiri|california roll|spicy tuna roll/,"🍣"],[/sashimi/,"🍣"],[/onigiri/,"🍙"],[/bento|katsu curry|teriyaki/,"🍱"],
+[/momo|dumpling|gyoza|potsticker|dim sum|siu mai|har gow|wonton|bao|pierogi|modak|kibbeh/,"🥟"],
+[/ramen|ramyeon|noodle|pho\b|chow mein|thukpa|laksa|udon|soba|lo mein|hakka|pad thai|pad see ew|japchae|pancit|mee goreng|char kway|bun cha|bun bo|dan dan|chop suey|maggi|laphing|idiyappam|seviyan/,"🍜"],
+[/spaghetti|pasta|penne|linguine|lasagne|ravioli|gnocchi|mac and cheese|cacio|aglio|alfredo/,"🍝"],
+[/pizza|calzone|pide|manakish|lahmacun/,"🍕"],[/burger|patty/,"🍔"],[/fries|chips(?!,)|hash brown/,"🍟"],
+[/hot dog|bratwurst|sausage|frankfurter/,"🌭"],[/taco/,"🌮"],[/tamale/,"🫔"],
+[/burrito|wrap|shawarma|gyro|doner|frankie|kathi|roll(?!s?\b.*spring)|enchilada|quesadilla|fajita/,"🌯"],
+[/falafel/,"🧆"],[/hummus|baba ganoush|mutabal|muhammara|tahini|labneh/,"🫙"],
+[/sandwich|banh mi|club|blt|melt|cheesesteak|smørrebrød|toast sandwich/,"🥪"],
+[/pancake|crêpe|crepe|galette|banh xeo|okonomiyaki|pajeon|malpua|hotteok|uttapam|pesarattu|dosa|chilla/,"🥞"],
+[/waffle/,"🧇"],[/croissant|pain au/,"🥐"],[/bagel/,"🥯"],[/pretzel/,"🥨"],[/baguette|bread|toast|bun\b|pav|focaccia|roll\b|muffin(?! ,)|rusk|poi|scone|bruschetta|cornbread/,"🍞"],
+[/roti|chapati|naan|paratha|phulka|thepla|bhakri|bhatura|kulcha|tortilla|pita|lavash|injera|arepa|appam|parotta|canai|puran poli|thalipeeth|luchi|puri|kochuri|khakhra|makki|missi|bajra roti|jowar|sel roti|festival|doubles|mandazi/,"🫓"],
+[/omelette|fried egg|scrambled|egg bhurji|bread omelette|shakshuka|huevos|tamagoyaki|poached/,"🍳"],[/egg/,"🥚"],
+[/prawn|shrimp|gambas|chingri|tempura/,"🍤"],[/crab/,"🦀"],[/lobster/,"🦞"],[/squid|calamari|takoyaki/,"🦑"],[/oyster|mussel|clam/,"🦪"],
+[/fish|rohu|hilsa|ilish|katla|pomfret|bombil|surmai|meen|salmon|tuna|sardine|mackerel|cod\b|tilapia|basa|masor|shutki|bacalhau|saltfish|ceviche/,"🐟"],
+[/bacon/,"🥓"],[/kebab|kabab|satay|yakitori|tikka(?! masala)|souvlaki|seekh|suya|skewer|shish|kofta|galouti/,"🍢"],
+[/wings|drumstick|fried chicken|tandoori chicken|nuggets|chicken popcorn|strips|karaage|rotisserie|roast chicken|jerk|peri peri|piri piri/,"🍗"],
+[/steak|picanha|lamb chop|pork chop|ribs|beef|mutton|lamb|goat|pork|ham\b|jamón|pepperoni|salami|keema|nihari|bulgogi|samgyeopsal|rendang|bobotie|goulash|meatball|meatloaf|ropa vieja|bourguignon|stroganoff|jerky|buff|sorpotel|vindaloo|char siu|jadoh|duck|turkey|liver|kosha mangsho/,"🥩"],
+[/salad|tabbouleh|fattoush|som tam|gado|kachumber|singju|slaw|caprese|niçoise|cobb|caesar/,"🥗"],
+[/soup|rasam|shorba|harira|borscht|chowder|minestrone|gazpacho|jjigae|tom yum|tom kha|sinigang|tinola|caldo|pozole|congee|pho|stew|pakhala|caldo/,"🍲"],
+[/biryani|pulao|fried rice|nasi|paella|jollof|risotto|kabsa|mandi|kimchi fried|gallo pinto|rice and peas|com tam|mujaddara|koshari|bisi bele|pongal|khichdi|curd rice|lemon rice|tamarind rice|bibimbap|chicken rice|oyakodon|gyudon|donburi|bowl,|burrito bowl|poke/,"🍛"],
+[/curry|dal|daal|masala|korma|kadhi|rajma|chole|sambar|tenga|jhol|paneer|kofta|makhani|rogan|vindaloo|xacuti|wot|shiro|tagine|chili con|feijoada|adobo|ghugni|misal|bhaji|sabzi|bharta|saag|avial|thoran|dalna|ghonto|shukto|labra|posto|aloo dum|aloo|dalma|stew|undhiyu|khar|pitika|eromba|chakalaka|refried|beans|moussaka|ratatouille|zunka|mapo|stir-fry|manchurian|chilli|kung pao|sweet and sour|orange chicken|tso|bharwa/,"🍛"],
+[/rice|idli|puttu|ragi mudde|mudde|poha|upma|sabudana|dalia|quinoa|couscous|bulgur|barley|millet|polenta|ugali|fufu|pap\b|komal|chira/,"🍚"],
+[/samosa|kachori|pakora|bhajiya|bhaji|vada|tikki|cutlet|croquet|empanada|coxinha|pasty|puff|spring roll|lumpia|cha gio|arancini|beguni|telebhaja|bonda|fafda|dhokla|khandvi|handvo|mathri|chakli|kibbeh|patty|dabeli/,"🥟"],
+[/chaat|puri|golgappa|puchka|bhel|sev|jhalmuri|murmura|chana chaat|corn chaat|dahi vada|ragda/,"🥙"],
+[/popcorn/,"🍿"],[/chips|crisps|nachos|kurkure|bhujia|crackers|rice cakes|banana chips/,"🥔"],
+[/cupcake/,"🧁"],[/cake|pastry|cheesecake|tres leches|bebinca|black forest|brownie|tiramisu|strudel|lava/,"🍰"],[/pie|tart|pastel de nata/,"🥧"],
+[/ice cream|kulfi|gelato|sundae|frozen yoghurt|choco bar|soft serve|mcflurry|bingsu|halo-halo|falooda/,"🍨"],
+[/pudding|custard|flan|crème brûlée|panna cotta|mousse|caramel pudding/,"🍮"],[/doughnut|donut|puff-puff|loukoumades|gulab|pantua|ledikeni/,"🍩"],
+[/cookie|biscuit|macaron|madeleine|wafer|digestive|chin chin/,"🍪"],[/chocolate|nutella/,"🍫"],[/churro|jalebi|imarti/,"🥨"],
+[/honey|maple/,"🍯"],[/ladoo|laru|barfi|peda|katli|kalakand|sandesh|rasgulla|rasmalai|chomchom|mysore pak|soan|halwa|halva|chikki|gujiya|mochi|turkish delight|baklava|kunafa|pitha|mishti doi|chhena/,"🍡"],
+[/kheer|payasam|phirni|rabri|shrikhand|aamras|mango sticky/,"🍮"],
+[/banana|plantain/,"🍌"],[/apple/,"🍎"],[/pear/,"🍐"],[/orange|kinnow|mandarin|mosambi|sweet lime/,"🍊"],[/lemon|lime|nimbu/,"🍋"],[/mango/,"🥭"],[/pineapple/,"🍍"],
+[/watermelon/,"🍉"],[/melon/,"🍈"],[/grape|raisin/,"🍇"],[/strawberr/,"🍓"],[/blueberr|jamun/,"🫐"],[/cherr/,"🍒"],[/peach|apricot|plum|prune/,"🍑"],[/kiwi/,"🥝"],
+[/coconut/,"🥥"],[/avocado|guacamole/,"🥑"],[/date|fig|anjeer/,"🌰"],[/papaya|guava|chikoo|custard apple|jackfruit|litchi|amla|dragon|pomegranate|fruit/,"🍈"],
+[/carrot/,"🥕"],[/corn|elote/,"🌽"],[/sweet potato/,"🍠"],[/potato|rösti|gratin/,"🥔"],[/broccoli/,"🥦"],[/tomato|salsa|ketchup/,"🍅"],[/cucumber|zucchini|gourd|lauki|tinda|turai/,"🥒"],
+[/mushroom/,"🍄"],[/bell pepper|capsicum/,"🫑"],[/onion/,"🧅"],[/garlic/,"🧄"],[/baingan|begun|eggplant|bengena/,"🍆"],
+[/spinach|saag|palak|cabbage|bok choy|greens|lai xaak|callaloo|sukuma|kimchi|sauerkraut|bamboo|seaweed|methi/,"🥬"],
+[/peas|edamame|green beans|beans|chickpea|lentil|sprouts|chana|soya|tofu|tempeh|moong|rajma/,"🫘"],
+[/peanut/,"🥜"],[/almond|walnut|cashew|pistachio|hazelnut|brazil|macadamia|trail mix|nut/,"🌰"],[/seed|makhana/,"🌻"],
+[/paneer|cheese|feta|mozzarella|cheddar|parmesan|khoa|mawa/,"🧀"],[/butter|ghee/,"🧈"],[/yoghurt|curd|raita|doi|cream/,"🥣"],
+[/oats|muesli|granola|cornflakes|chocos|cereal/,"🥣"],[/bar\b|protein/,"💪"],[/oil/,"🫒"],[/sugar|jaggery|jam|syrup|condensed/,"🍬"],
+[/sauce|chutney|pickle|mayonnaise|dressing|vinaigrette|pesto|mustard|sriracha|gravy|papad/,"🫙"],
+[/chicken|tandoori|65/,"🍗"]
+];
+var SECTION_PIC={"Drinks":"🥤","Alcohol":"🍸","Fruit":"🍏","Vegetables":"🥗","Nuts & seeds":"🥜","Dairy & eggs":"🥛","Desserts":"🍰","Indian sweets":"🍡","Fish & seafood":"🐟","Meat & poultry":"🍗","Fast food":"🍔","Snacks & packaged":"🍿","Breakfast & bakery":"🥐","Oils, sauces & spreads":"🫙","Grains, breads & pulses":"🌾","Japanese":"🍱","Korean":"🍲","Chinese & Indo-Chinese":"🥡","Thai":"🍛","Vietnamese":"🍜","Mexican & Latin American":"🌮","Italian":"🍝","American":"🍔"};
+var picCache={};
+function picFor(name,group){var k=name+"|"+group;if(picCache[k])return picCache[k];
+  var n=name.toLowerCase(),p=null;
+  for(var i=0;i<PICS.length;i++){if(PICS[i][0].test(n)){p=PICS[i][1];break}}
+  return picCache[k]=p||SECTION_PIC[group]||"🍽️"}
+function picHtml(name,group,photo,small){
+  var cls="pic"+(small?" sm":"");
+  if(photo)return'<span class="'+cls+'"><img src="'+esc(photo)+'" alt=""></span>';
+  return'<span class="'+cls+'" aria-hidden="true">'+picFor(name,group)+'</span>'}
+function customPhoto(name){var c=state.custom.find(function(x){return x.name===name});return c&&c.photo||""}
+
+/* ---------- storage ---------- */
+var saveOk=true;
+function load(){try{var raw=localStorage.getItem(LS);if(!raw)return;var o=JSON.parse(raw);applyData(o)}catch(e){}}
+function applyData(o){if(!o||typeof o!=="object")return false;
+  if(o.target>0)state.target=Math.round(o.target);
+  if(Array.isArray(o.custom))state.custom=o.custom.filter(function(c){return c&&typeof c.name==="string"&&isFinite(c.kcal)});
+  if(o.days&&typeof o.days==="object"){var d={};Object.keys(o.days).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&Array.isArray(o.days[k]))d[k]=o.days[k].filter(function(e){return e&&typeof e.name==="string"&&isFinite(e.kcal)})});state.days=d}
+  return true}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state));if(!saveOk){saveOk=true;$("saveState").textContent="Saved on this device"}}
+  catch(e){saveOk=false;$("saveState").textContent="Could not save. Your phone may be out of space, or private browsing is on."}}
+
+function entries(k){return state.days[k]||[]}
+function totals(k){var t={kcal:0,p:0,c:0,f:0};entries(k).forEach(function(e){t.kcal+=e.kcal;t.p+=e.p||0;t.c+=e.c||0;t.f+=e.f||0});return t}
+
+/* ---------- actions ---------- */
+function addEntry(name,serving,kcal,p,c,f,qty,group){
+  var q=num(qty)||1;
+  var list=entries(cur).slice();
+  list.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),meal:$("meal").value,name:name,serving:serving||"",qty:q,group:group||"",
+    kcal:Math.round(kcal*q),p:r1(p*q),c:r1(c*q),f:r1(f*q)});
+  state.days[cur]=list;save();render()}
+function removeEntry(id){state.days[cur]=entries(cur).filter(function(e){return e.id!==id});if(!state.days[cur].length)delete state.days[cur];save();render()}
+function go(k){cur=k;render()}
+
+/* ---------- the cats ---------- */
+function catLines(){
+  var t=totals(cur),tg=state.target,eaten=Math.round(t.kcal),n=entries(cur).length,isToday=cur===todayKey(),h=new Date().getHours();
+  var pct=tg?eaten/tg:0;
+  if(!n){
+    if(!isToday)return["Nothing was logged on this day.","You can still add what you remember, or hop back to today."];
+    if(h<11)return["Good morning. Breakfast first, then my treats?","Pick a food below and I will keep count."];
+    if(h<16)return["Nothing logged yet today. Lunch is calling.","Search for anything, from roti to ramen."];
+    return["An empty plate so far today.","Add what you have had, even roughly. It still helps."];}
+  var idli,chut;
+  if(pct<0.5){idli="Plenty of room left: "+fmt(tg-eaten)+" kcal.";chut=t.p<20?"Some dal, eggs or paneer would add protein.":"Good start. Keep going."}
+  else if(pct<0.9){idli="Nicely on track today.";chut=fmt(tg-eaten)+" kcal to go, so dinner can be a proper one."}
+  else if(pct<=1.05){idli="Right around your target. Well judged.";chut="I would call that a balanced day."}
+  else{idli="A bit over today, by "+fmt(eaten-tg)+" kcal. It happens to every cat.";chut="One day does not make a week. Tomorrow is a fresh bowl."}
+  return[idli,chut]}
+function renderCats(){var l=catLines();
+  $("sayIdli").innerHTML='<b>Mr Idli</b>'+esc(l[0]);
+  $("sayChutney").innerHTML='<b>Ms Chutney</b>'+esc(l[1])}
+
+/* ---------- render ---------- */
+function allFoods(){return state.custom.map(function(c){return[c.name,"my food",c.kcal,c.p||0,c.c||0,c.f||0,MINE,c.photo||""]}).concat(FOODS)}
+function renderCatSelect(){var sel=$("cat"),keep=sel.value;
+  var cats=(state.custom.length?[MINE]:[]).concat(Object.keys(GROUPS));
+  sel.innerHTML='<option value="">All cuisines</option>'+cats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join("");
+  sel.value=cats.indexOf(keep)>=0?keep:""}
+function renderResults(){var words=$("search").value.trim().toLowerCase().split(/\s+/).filter(Boolean),cat=$("cat").value,all=allFoods();
+  var hits=[];all.forEach(function(f,i){if(cat&&f[6]!==cat)return;var hay=(f[0]+" "+f[6]).toLowerCase();
+    for(var w=0;w<words.length;w++){if(hay.indexOf(words[w])<0)return}hits.push(i)});
+  var CAP=150,shown=hits.slice(0,CAP);
+  $("count").textContent=hits.length>CAP?"Showing "+CAP+" of "+fmt(hits.length)+" matches. Type more or pick a cuisine to narrow it.":fmt(hits.length)+" of "+fmt(all.length)+" foods";
+  var el=$("results");
+  if(!hits.length){el.innerHTML='<li><p class="none">Nothing matches. Add it yourself just below.</p></li>';return}
+  el.innerHTML=shown.map(function(i){var f=all[i];
+    return'<li><button type="button" data-i="'+i+'">'+picHtml(f[0],f[6],f[7])+'<span class="txt"><span class="n">'+esc(f[0])+'</span><span class="s">'+esc(f[1])+(cat?"":" · "+esc(f[6]))+'</span></span><span class="k num">'+f[2]+' kcal<span class="plus" aria-hidden="true">+</span></span></button></li>'}).join("")}
+function renderSummary(){var t=totals(cur),tg=state.target,eaten=Math.round(t.kcal);
+  $("eaten").textContent=fmt(eaten);
+  var diff=tg-eaten;
+  $("stateChip").textContent=diff>=0?fmt(diff)+" kcal left":fmt(-diff)+" kcal over target";
+  $("barFill").style.width=Math.min(100,tg?eaten/tg*100:0)+"%";
+  $("mP").textContent=Math.round(t.p)+" g";$("mC").textContent=Math.round(t.c)+" g";$("mF").textContent=Math.round(t.f)+" g";
+  if(document.activeElement!==$("target"))$("target").value=tg}
+function renderMeals(){var es=entries(cur);
+  $("meals").innerHTML=MEALS.map(function(m){
+    var mine=es.filter(function(e){return e.meal===m[0]});
+    var sum=mine.reduce(function(a,e){return a+e.kcal},0);
+    var rows=mine.length?'<ul class="entries">'+mine.map(function(e){
+      return'<li>'+picHtml(e.name,e.group||"",e.group===MINE?customPhoto(e.name):"",true)+'<span class="n">'+esc(e.name)+' <small>'+(e.qty!==1?"× "+e.qty+" ":"")+esc(e.serving||"")+'</small></span><span class="k num">'+e.kcal+' kcal</span><button type="button" data-del="'+esc(e.id)+'" aria-label="Remove '+esc(e.name)+'">×</button></li>'}).join("")+'</ul>'
+      :'<p class="empty">Nothing logged yet.</p>';
+    return'<div class="meal"><div class="mealhead"><h3>'+m[1]+'</h3><span class="num">'+fmt(sum)+' kcal</span></div>'+rows+'</div>'}).join("")}
+function weekKeys(){var t=todayKey(),a=[];for(var i=6;i>=0;i--)a.push(shift(t,-i));return a}
+function renderWeek(){var keys=weekKeys(),vals=keys.map(function(k){return Math.round(totals(k).kcal)});
+  var tg=state.target,max=Math.max(tg*1.2,Math.max.apply(null,vals)*1.05,1),H=96;
+  var html=keys.map(function(k,i){var v=vals[i],d=dateOf(k);
+    return'<button type="button" class="col'+(k===cur?" sel":"")+(v?"":" zero")+'" data-day="'+k+'" aria-label="'+d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"})+", "+v+' kcal"><span class="v">'+(v?fmt(v):"")+'</span><span class="b" style="height:'+Math.round(v/max*H)+'px"></span><span class="d">'+d.toLocaleDateString("en-IN",{weekday:"short"})+'</span></button>'}).join("");
+  html+='<div class="tline" style="bottom:'+(22+Math.round(tg/max*H))+'px"><span>target '+fmt(tg)+'</span></div>';
+  $("week").innerHTML=html;
+  var logged=vals.filter(function(v){return v>0});
+  $("avg").textContent=logged.length?"Average on the "+logged.length+" day"+(logged.length>1?"s":"")+" you logged: "+fmt(logged.reduce(function(a,b){return a+b},0)/logged.length)+" kcal":"Log a meal and this week starts filling in."}
+function renderDate(){var d=dateOf(cur),t=todayKey();
+  $("dateLabel").textContent=cur===t?"Today, "+d.toLocaleDateString("en-IN",{day:"numeric",month:"short"}):d.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
+  $("goToday").hidden=cur===t}
+function render(){renderDate();renderCats();renderSummary();renderCatSelect();renderResults();renderMeals();renderWeek()}
+
+/* ---------- photo for own foods ---------- */
+var pendingPhoto="";
+function shrink(file){return new Promise(function(res,rej){
+  var url=URL.createObjectURL(file),img=new Image();
+  img.onload=function(){var S=160,c=document.createElement("canvas");c.width=S;c.height=S;var x=c.getContext("2d");
+    var s=Math.min(img.width,img.height);x.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,S,S);URL.revokeObjectURL(url);
+    try{res(c.toDataURL("image/jpeg",0.78))}catch(e){rej(e)}};
+  img.onerror=function(){URL.revokeObjectURL(url);rej(new Error("bad image"))};img.src=url})}
+$("cPhoto").addEventListener("change",function(){var f=this.files&&this.files[0];if(!f)return;
+  shrink(f).then(function(d){pendingPhoto=d;$("cPicPreview").innerHTML='<img src="'+d+'" alt="">';$("cPhotoNote").textContent="Photo ready."})
+  .catch(function(){pendingPhoto="";$("cPhotoNote").textContent="That file could not be read as a picture. Try a JPG or PNG."});
+  this.value=""});
+
+/* ---------- events ---------- */
+$("prev").addEventListener("click",function(){go(shift(cur,-1))});
+$("next").addEventListener("click",function(){go(shift(cur,1))});
+$("goToday").addEventListener("click",function(){go(todayKey())});
+$("search").addEventListener("input",renderResults);
+$("cat").addEventListener("change",renderResults);
+$("results").addEventListener("click",function(ev){var b=ev.target.closest("button[data-i]");if(!b)return;
+  var f=allFoods()[+b.getAttribute("data-i")];if(!f)return;
+  addEntry(f[0],f[6]===MINE?"":f[1],f[2],f[3],f[4],f[5],$("qty").value,f[6]);$("qty").value=1});
+$("meals").addEventListener("click",function(ev){var b=ev.target.closest("button[data-del]");if(b)removeEntry(b.getAttribute("data-del"))});
+$("week").addEventListener("click",function(ev){var b=ev.target.closest("button[data-day]");if(b)go(b.getAttribute("data-day"))});
+$("target").addEventListener("change",function(){var v=Math.round(num(this.value));
+  if(v<500||v>6000){this.value=state.target;return}
+  state.target=v;save();render()});
+$("customForm").addEventListener("submit",function(ev){ev.preventDefault();
+  var name=$("cName").value.trim(),kcal=parseFloat($("cKcal").value);
+  if(!name){$("cErr").textContent="Give the food a name.";return}
+  if(!isFinite(kcal)||kcal<0){$("cErr").textContent="Enter the calories for one serving.";return}
+  $("cErr").textContent="";
+  var p=num($("cP").value),c=num($("cC").value),f=num($("cF").value);
+  if($("cKeep").checked){
+    var existing=state.custom.find(function(x){return x.name.toLowerCase()===name.toLowerCase()});
+    if(existing){if(pendingPhoto)existing.photo=pendingPhoto}
+    else state.custom=[{name:name,kcal:Math.round(kcal),p:p,c:c,f:f,photo:pendingPhoto}].concat(state.custom).slice(0,200)}
+  addEntry(name,"",kcal,p,c,f,$("qty").value,$("cKeep").checked?MINE:"");
+  this.reset();$("cKeep").checked=true;$("qty").value=1;pendingPhoto="";$("cPicPreview").textContent="🍽️";$("cPhotoNote").textContent="Optional. It shows next to this food from now on."});
+
+/* ---------- backup ---------- */
+$("exportBtn").addEventListener("click",function(){
+  try{var blob=new Blob([JSON.stringify({app:"kya-khaya-aaj",version:1,tag:"anandamide.ks",saved:new Date().toISOString(),data:state},null,1)],{type:"application/json"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="kya-khaya-aaj-backup-"+todayKey()+".json";document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);
+    $("dataMsg").textContent="Backup saved to your downloads."}
+  catch(e){$("dataMsg").textContent="This browser would not save the file. Try again from the installed app or another browser."}});
+$("importFile").addEventListener("change",function(){var f=this.files&&this.files[0];if(!f)return;var input=this;
+  f.text().then(function(txt){var o=JSON.parse(txt);var d=o&&o.data?o.data:o;
+    if(!d||!d.days)throw new Error("not a backup");
+    var days=Object.keys(d.days).length;
+    var before=JSON.stringify(state);
+    if(!applyData(d))throw new Error("bad");
+    save();render();$("dataMsg").textContent="Restored "+days+" day"+(days===1?"":"s")+" from the backup.";
+    void before})
+  .catch(function(){$("dataMsg").textContent="That file is not a Kya Khaya Aaj? backup. Pick the .json file the app saved."})
+  .finally(function(){input.value=""})});
+
+/* ---------- install ---------- */
+var deferred=null,standalone=window.matchMedia&&matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferred=e;if(!standalone){$("installText").textContent="Put Kya Khaya Aaj? on your home screen.";$("installBtn").hidden=false;$("installBar").hidden=false}});
+$("installBtn").addEventListener("click",function(){if(!deferred)return;deferred.prompt();deferred.userChoice.finally(function(){deferred=null;$("installBar").hidden=true})});
+window.addEventListener("appinstalled",function(){$("installBar").hidden=true});
+(function iosHint(){var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(ios&&!standalone&&location.protocol==="https:"){$("installText").textContent="To install on iPhone: tap Share, then Add to Home Screen.";$("installBtn").hidden=true;$("installBar").hidden=false}})();
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
+  window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+
+/* ---------- start ---------- */
+(function pickMeal(){var h=new Date().getHours();$("meal").value=h<11?"breakfast":h<16?"lunch":h<19?"snacks":"dinner"})();
+load();render();
+// roll over to the new day if the app stays open past midnight
+setInterval(function(){var t=todayKey();if(t!==render._day){if(cur===render._day)cur=t;render._day=t;render()}},60000);render._day=todayKey();
+})();
+</script>
+</body>
+</html>
